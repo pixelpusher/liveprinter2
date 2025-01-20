@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <!-- <link rel="icon" type="image/svg+xml" href="/vite.svg" /> -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>LP Test</title>
+  </head>
+  <body>
+    <div id="controls">
+      <button id="start-btn">START</button>
+      <button id="stop-btn">STOP</button>
+      <button id="download-btn" class="disabled">DOWNLOAD GCODE</button>
+    </div>
+    <div id="app">
+      <textarea name="code" id="code" cols="80" rows="10">
+# start | temp 220 | bed 68 | speed 80 | bpm 120 | interval "1/2b"
+
+# mov2 x:lp.cx y:lp.cy z:0.2
+
+let l=4;
+
+while (l--)
+{
+let i=4;
+console.log(`${l}:${i}`);
+  while (i--) {
+  # speed "C7" | drawtime "1b" | turn 90
+  };
+  # up 1
+}
+      </textarea>
+      <p name="output" id="output">TRANSPILED...</p>
+      <textarea name="results" id="results" cols="80" rows="10">
+        # start | dist 50 | speed 40 | draw
+      </textarea>
+      <button id="run-btn">RUN</button>
+    </div>
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>
