@@ -13,28 +13,14 @@
       <button id="download-btn" class="disabled">DOWNLOAD GCODE</button>
     </div>
     <div id="app">
-      <textarea name="code" id="code" cols="80" rows="10">
-# start | temp 220 | bed 68 | speed 80 | bpm 120 | interval "1/2b"
-
-# mov2 x:lp.cx y:lp.cy z:0.2
-
-let l=4;
-
-while (l--)
-{
-let i=4;
-console.log(`${l}:${i}`);
-  while (i--) {
-  # speed "C7" | drawtime "1b" | turn 90
-  };
-  # up 1
-}
-      </textarea>
+      <div id="preview"></div>
+      <button id="run-btn">RUN</button>
+      <div id="editor-container"></div>
+      
       <p name="output" id="output">TRANSPILED...</p>
-      <textarea name="results" id="results" cols="80" rows="10">
+      <textarea name="code" id="code" cols="80" rows="10">
         # start | dist 50 | speed 40 | draw
       </textarea>
-      <button id="run-btn">RUN</button>
     </div>
     <script type="module" src="/src/main.js"></script>
   </body>
