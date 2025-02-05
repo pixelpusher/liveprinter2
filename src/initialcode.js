@@ -1,5 +1,5 @@
 export const initialCode = 
-`# start | temp 220 | bed 68 | bpm 120 | interval '1/2b' | m2s 'C5' 
+`# start | temp 220 | bed 68 | bpm 120 | interval '1b' | m2s 'C5' 
 
 # mov2 x:lp.cx y:lp.cy z:0.2 speed:80
 
