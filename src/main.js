@@ -10,36 +10,78 @@ import "./style.css";
 import { LivePrinter } from "liveprinter-core";
 import { makeVisualiser } from "vizlib";
 import { transpile } from "lp-language";
-import * as gridlib from 'gridlib'; 
+import * as gridlib from "gridlib";
 import * as Tone from "tone";
 import { Logger } from "liveprinter-utils";
 import { initialCode, ual_9_6_24 } from "./initialcode";
 import { evalScope, evaluate } from "./evaluate.mjs";
 import { playNotes } from "./sound";
 
-import * as utils from 'liveprinter-utils';
+import * as utils from "liveprinter-utils";
 
-  //--------------------------------------------------
-  //---- CODE FROM TEST ------------------------------
-  //--------------------------------------------------
+const jsrules = {
+  comments: /(\/\/.*)/g,
+  keywords:
+    /\b(global|new|if|else|do|while|switch|for|of|continue|break|return|typeof|function|var|const|let|\.length)(?=[^\w])/g,
+  numbers: /\b(\d+)/g,
+  strings: /(".*?"|'.*?'|\`.*?\`)/g,
+};
 
-  const codeTextArea = document.getElementById("code");
-  codeTextArea.value = ual_9_6_24;
 
-  Logger.level = Logger.LOG_LEVEL.error;
+document.addEventListener("DOMContentLoaded", (event) => {
+  console.log("DOM fully loaded and parsed");
+});
 
-  //attach a click listener to a play button
-  document.querySelector("#start-btn")?.addEventListener("click", async () => {
-    await Tone.start();
-    Logger.info("audio is ready");
-    main();
+//--------------------------------------------------
+//---- CODE FROM TEST ------------------------------
+//--------------------------------------------------
+
+// const codeTextArea = document.getElementById("code");
+// codeTextArea.value = ual_9_6_24;
+
+Logger.level = Logger.LOG_LEVEL.error;
+
+//attach a click listener to a play button
+document.querySelector("#start-btn")?.addEventListener("click", async () => {
+  await Tone.start();
+  Logger.info("audio is ready");
+
+  main();
+});
+
+
+const edit1 = document.getElementById("editor-1");
+
+const edit2 = document.getElementById("editor-2");
+
+  document
+  .getElementById('editor-1').addEventListener("click", async () => {
+    document.querySelector(".two")?.classList.add("hidden");
+    document.querySelector(".one")?.classList.remove("hidden");
+    document.getElementById("editor-2").classList.remove("disabled");
+    edit1.classList.add("disabled")
   });
+  
+  
+  document
+  .getElementById('editor-2').addEventListener("click", async () => {
+    document.querySelector(".one")?.classList.add("hidden");
+    document.querySelector(".two")?.classList.remove("hidden");
+    document.getElementById("editor-1").classList.remove("disabled");
+    edit2.classList.add("disabled")
+  });
+  
+  
+  document.querySelector(".two")?.classList.add("hidden");
+
 
 /**
  * Run it!
  * @returns
  */
 async function main() {
+
+  
   const lp = new LivePrinter();
 
   const eventsListener = {
@@ -91,12 +133,40 @@ async function main() {
     debug: false,
   });
 
-
   // set up print events feedback
   lp.addPrintListener(eventsListener);
 
   // set up global module and function references
-  evalScope({lp, gridlib, log:Logger.info}, utils);
+  evalScope({ lp, gridlib, log: Logger.info }, utils);
+
+  const b1 = bitty.create({
+    flashColor: "black",
+    flashTime: 100,
+    value: ual_9_6_24,
+    el: document.querySelector(".one"),
+    rules: jsrules,
+  });
+
+  b1.subscribe("run", async (txt) => {
+    // console.log( 'editor 1:', txt )
+    const results = await evaluate(txt, transpile);
+    Logger.info(`Evaluated code: ${JSON.stringify(results.code,null,2)}`);
+    b2.el.innerHTML = JSON.stringify(results.code,null,2);
+    // document.getElementById('output').innerHTML=`Evaluated code: ${JSON.stringify(results)}`;
+  });
+
+  const b2 = bitty.create({
+    flashColor: "black",
+    flashTime: 100,
+    value: "code2",
+    el: document.querySelector(".two"),
+    rules: jsrules,
+  });
+
+  // b2.subscribe( 'run', txt => {
+  //   console.log( 'editor 2:', txt )
+  //   eval( txt )
+  // })
 
   /**
    * CodeMirrors
@@ -112,16 +182,11 @@ async function main() {
       },
     ]);
   }
-  //attach a click listener to a play button
-  document.querySelector("#stop-btn")?.addEventListener("click", async () => {
-    await Tone.stop();
-    Logger.info("audio is stopped");
-  });
-  //attach a click listener to a play button
-  document.querySelector("#run-btn")?.addEventListener("click", async () => {
-    const results = await evaluate(codeTextArea.value, transpile);
-    Logger.info(`Evaluated code: ${JSON.stringify(results)}`);
-    document.getElementById('output').innerHTML=`Evaluated code: ${JSON.stringify(results)}`;
 
-  });
+  //attach a click listener to a play button
+  // document.querySelector("#run-btn")?.addEventListener("click", async () => {
+  //   const results = await evaluate(codeTextArea.value, transpile);
+  //   Logger.info(`Evaluated code: ${JSON.stringify(results)}`);
+  //   document.getElementById('output').innerHTML=`Evaluated code: ${JSON.stringify(results)}`;
+  // });
 }

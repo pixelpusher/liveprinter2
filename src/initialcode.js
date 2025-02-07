@@ -66,7 +66,7 @@ global notes = ['c4', 'd2', 'g4','c4', 'd3', 'g4','c4', 'd4', 'g4'];
 // START NOTES ---------------------------------
 
 global pushnote = function(val, times=1) {
-  for (let i=0; i<times; i++)
+  for (let i=0; i < times; i++)
     {
       if (Array.isArray(val))
         notes.push(...val);

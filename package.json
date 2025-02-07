@@ -9,6 +9,7 @@
     "preview": "vite preview"
   },
   "devDependencies": {
+    "bitty-editor": "github:charlieroberts/bitty",
     "codemirror": "^6.0.1",
     "gridlib": "github:pixelpusher/gridlib",
     "liveprinter-core": "github:pixelpusher/liveprinter-core",
