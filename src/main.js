@@ -137,7 +137,7 @@ async function main() {
   lp.addPrintListener(eventsListener);
 
   // set up global module and function references
-  evalScope({ lp, gridlib, log: Logger.info }, utils);
+  evalScope({ lp, gridlib, visualiser, log: Logger.info }, utils);
 
   const b1 = bitty.create({
     flashColor: "black",

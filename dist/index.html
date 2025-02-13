@@ -1,14 +1,109 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <!-- <link rel="icon" type="image/svg+xml" href="/vite.svg" /> -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Vite App</title>
-    <script type="module" crossorigin src="/assets/index-BRXc5fq2.js"></script>
-    <link rel="stylesheet" crossorigin href="/assets/index-DRNMkqs8.css">
+    <title>LP Test</title>
+    <script src="./node_modules/bitty-editor/bitty.min.js" defer></script>
+    <script
+      src="./node_modules/bitty-editor/plugins/highlight_active_line.js"
+      defer
+    ></script>
+    <style>
+      .bitty-editor {
+        position: absolute;
+        width: 98%;
+        height: 100vh;
+        background: transparent;
+        opacity: 0.5;
+        color:#fff;
+        font-family: "Roboto Mono", monospace;
+        font-size: 12px;
+        outline: none;
+        overflow-y: auto;
+        white-space: pre-wrap;
+        counter-reset: line;
+        padding-left: 4em;
+      }
+
+      .bitty-editor div::before {
+        content: counter(line);
+        counter-increment: line;
+        position: absolute;
+        right: calc(100% + 16px);
+        opacity: 0.5;
+      }
+
+      ::selection {
+        background: #444;
+        color: white;
+      }
+
+      /* syntax coloring rules */
+      .bitty-keywords {
+        font-weight: bold;
+        color: rgb(105, 105, 1);
+      }
+      .bitty-strings {
+        color: #c356be;
+        font-style: italic;
+      }
+      .bitty-comments {
+        color: #939292;
+        font-style: italic;
+      }
+
+      /* 
+ * fancy pseudo-selector to not color numbers when they are inside
+ * coments or strings
+ */
+      .bitty-numbers:not(.bitty-strings > span, .bitty-comments > span) {
+        color: #faa;
+      }
+
+      .bitty-active {
+        background: #662;
+        /* opacity: 0.2; */
+      }
+
+      p {
+        color: #662;
+        font-size: smaller;
+      }
+    </style>
+    <script type="module" crossorigin src="/assets/index-BI5RISc8.js"></script>
+    <link rel="stylesheet" crossorigin href="/assets/index-B8nrjGwj.css">
   </head>
   <body>
-    <div id="app"></div>
+    <div id="controls">
+      <button id="start-btn">START</button>
+      <button name="editor-1" id="editor-1" class="disabled">editor 1</button>
+      <button name="editor-2" id="editor-2">editor 2</button>
+      
+      <button id="download-btn" class="disabled">DOWNLOAD GCODE</button>
+      <p>TRANSPILED: <span id="output"></span></p>
+    </div>
+    <div id="app">
+      <div id="preview"></div>
+      <!-- <button id="run-btn">RUN</button> -->
+
+      <div id="editor-container">
+        <div
+          class="bitty-editor one"
+          contenteditable="true"
+          spellcheck="false"
+        ></div>
+        <div
+          class="bitty-editor two"
+          contenteditable="true"
+          spellcheck="false"
+        ></div>
+      </div>
+
+      <!-- <textarea name="code" id="code" cols="80" rows="10">
+        # start | dist 50 | speed 40 | draw
+      </textarea> -->
+    </div>
   </body>
 </html>
