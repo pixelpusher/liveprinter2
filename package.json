@@ -9,9 +9,10 @@
     "preview": "vite preview"
   },
   "devDependencies": {
-    "bitty-editor": "github:charlieroberts/bitty",
+    "bottleneck": "^2.19.5",
     "codemirror": "^6.0.1",
     "gridlib": "github:pixelpusher/gridlib",
+    "jquery": "^3.7.1",
     "liveprinter-core": "github:pixelpusher/liveprinter-core",
     "liveprinter-utils": "github:pixelpusher/lp-utils",
     "lp-language": "github:pixelpusher/lp-language",

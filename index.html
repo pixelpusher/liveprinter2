@@ -1,108 +1,365 @@
-<!DOCTYPE html>
+﻿<!doctype html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <!-- <link rel="icon" type="image/svg+xml" href="/vite.svg" /> -->
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>LP Test</title>
-    <script src="./node_modules/bitty-editor/bitty.min.js" defer></script>
+<head>
+    <meta charset="utf-8">
+    <!-- Required meta tags -->
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <title>Der Druckerstau</title>
+
+    <script src="./src/js/lib/bitty-editor/bitty.min.js"></script>
     <script
-      src="./node_modules/bitty-editor/plugins/highlight_active_line.js"
-      defer
-    ></script>
-    <style>
-      .bitty-editor {
-        position: absolute;
-        width: 98%;
-        height: 100vh;
-        background: transparent;
-        opacity: 0.5;
-        color:#fff;
-        font-family: "Roboto Mono", monospace;
-        font-size: 12px;
-        outline: none;
-        overflow-y: auto;
-        white-space: pre-wrap;
-        counter-reset: line;
-        padding-left: 4em;
-      }
+      src="./src/js/lib/bitty-editor/plugins/highlight_active_line.js">
+    </script>
+    <!-- <link rel="stylesheet" href="/style/codemirror_all.css" type="text/css"> -->
+    
+    <!-- Bootstrap 3 -->
+    <link rel="stylesheet" href="./src/style/bootstrap.min.css" type="text/css">
+    <link rel="stylesheet" href="./src/style/liveprinter.css" type="text/css">
 
-      .bitty-editor div::before {
-        content: counter(line);
-        counter-increment: line;
-        position: absolute;
-        right: calc(100% + 16px);
-        opacity: 0.5;
-      }
+    <!-- main code -->
+    <script src="./src/js/main.js" type="module"></script>
+    
+    <script src="./src/js/lib/jquery-3.7.1.min.js"></script>
+    <script src="./src/js/lib/bootstrap/bootstrap.bundle.js" type="text/javascript"></script>
+</head>
+<body>
+    <div class="lines"></div>
+    <div class="container" id="body">
+        <!-- <div class="row">
+                        <div class="col-md-3"><a href="http://github.com/pixelpusher/liveprinter"><em>The Printer Jam</em></a></div>
+                        <div class="col-md-9" id="header"></div>
+        </div> -->
+        <div class="row">
+            <div class="col-9 col-md-8" id="printer-editor-col">
+                <div class="box bg-colorful1 fullheight">
+                    <ul id="editor-settings-nav" class="nav nav-tabs flex-column flex-sm-row" role="tablist">
+                        <li class="nav-item">
+                            <a id="printer-tab" class="flex-sm-fill text-sm-center nav-link active lightnav" data-toggle="pill" href="#printer" role="tab" aria-controls="printer" aria-selected="false">printer settings</a>
+                        </li>
+                        <li class="nav-item">
+                            <a id="history-editor-tab" class="flex-sm-fill text-sm-center nav-link lightnav" data-toggle="pill" href="#history-code-editor-area" role="tab" aria-controls="history-code-editor-area" aria-selected="false">history code editor</a>
+                        </li>
+                        <li class="nav-item">
+                            <a id="gcode-editor-tab" class="flex-sm-fill text-sm-center nav-link lightnav" data-toggle="pill" href="#gcode-editor-area" role="tab" aria-controls="gcode-editor-area" aria-selected="false">gcode editor</a>
+                        </li>
+                        <li class="nav-item btn-group">
+                            <a id="editor-tab" class="flex-sm-fill text-sm-center nav-link lightnav" data-toggle="pill" href="#code-editor-area" role="tab" aria-controls="code-editor-area" aria-selected="true">code editor</a>
+                            <a id="examples-dropdown" class="flex-sm-fill text-sm-center nav-link lightnav active dropdown-toggle dropdown-toggle-split" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" role="tab">
+                                <span class="sr-only">Toggle Dropdown</span>
+                            </a>
+                            <div id="examples-list" class="dropdown-menu">
+                                <a class="dropdown-item purplink" href="#" data-link="/examples/default.js">getting started</a>
+                                <a class="dropdown-item purplink" href="#" data-link="/examples/using-functions.js">using functions</a>
+                                <a class="dropdown-item purplink" href="#" data-link="/examples/sending-gcode.js">sending gcode</a>
+                                <a class="dropdown-item purplink" href="#" data-link="/examples/algorave.js">draw the algorave logo</a>
+                                <a class="dropdown-item purplink" href="#" data-link="/examples/airprinting.js">print pyramids and structures in air</a>
+                                <a class="dropdown-item purplink" href="#" data-link="/examples/minigrammar.js">code concisely with the minigrammar</a>
+                                <a class="dropdown-item purplink" href="#" data-link="/examples/lsystems.js">create generative hilbert curves using LSystems - 1</a>
+                                <a class="dropdown-item purplink" href="#" data-link="/examples/lsystems2.js">create generative curves using LSystems - 2</a>
+                                <a class="dropdown-item purplink" href="#" data-link="/examples/circle.js">draw a circle</a>
+                                <a class="dropdown-item purplink" href="#" data-link="/examples/cyber-ants.js">space filling: generative ants</a>
+                                <a class="dropdown-item purplink" href="#" data-link="/examples/maryhadalittlelamb.js">playing Mary Had a Little Lamb</a>
+                                <a class="dropdown-item purplink" href="#" data-link="/examples/musicalevents.js">scheduling musical events</a>
+                                <div class="dropdown-divider"></div>
+                                <a class="dropdown-item purplink" href="#" data-link="/examples/pythontest.py">python geolocation etc.</a>
+                                <a class="dropdown-item purplink" href="#" data-link="/examples/circle.py">drawing a circle</a>
+                                <div class="dropdown-divider"></div>
+                                <a id="reload-edited-session" class="dropdown-item purplink" href="#">reload last edited</a>
+                                <a id="reload-saved-session" class="dropdown-item purplink" href="#">reload last saved</a>
+                                <a id="save-session" class="dropdown-item purplink"><strong>save current</strong></a>
+                            </div>
+                        </li>
+                        <li class="nav-item"><button id="python-mode-btn" type="button" class="btn btn-sm btn-warning" data-toggle="button" aria-pressed="false" autocomplete="off">javascript</button></li>
+                        <li class="nav-item">
+                            <a id="working-tab" class="flex-sm-fill text-sm-center nav-link lightnav" data-toggle="pill" href="#" role="tab" aria-selected="false">...working</a>
+                        </li>
+                    </ul>
 
-      ::selection {
-        background: #444;
-        color: white;
-      }
+                    <div id="printer-info" class="col-md-12">
+                        <form>
+                            <div class="row">
+                                <div class="col-md-2">
+                                    <div class="input-group input-group-sm mb-2">
+                                        <div class="input-group-prepend">
+                                            <span class="input-group-text" id="basic-addon-x">x</span>
+                                        </div>
+                                        <input name="x" type="text" class="form-control form-control-sm" placeholder="0.00" aria-label="x" aria-describedby="basic-addon-x">
+                                    </div>
+                                </div>
+                                <div class="col-md-2">
+                                    <div class="input-group input-group-sm mb-2">
+                                        <div class="input-group-prepend">
+                                            <span class="input-group-text" id="basic-addon-y">y</span>
+                                        </div>
+                                        <input name="y" type="text" class="form-control form-control-sm" placeholder="0.00" aria-label="y" aria-describedby="basic-addon-y">
+                                    </div>
+                                </div>
+                                <div class="col-md-2">
+                                    <div class="input-group input-group-sm mb-2">
+                                        <div class="input-group-prepend">
+                                            <span class="input-group-text" id="basic-addon-z">z</span>
+                                        </div>
+                                        <input name="z" type="text" class="form-control form-control-sm" placeholder="0.00" aria-label="z" aria-describedby="basic-addon-z">
+                                    </div>
+                                </div>
+                                <div class="col-md-2">
+                                    <div class="input-group input-group-sm mb-2">
+                                        <div class="input-group-prepend">
+                                            <span class="input-group-text" id="basic-addon-e">e</span>
+                                        </div>
+                                        <input name="e" type="text" class="form-control form-control-sm" placeholder="0.00" aria-label="e" aria-describedby="basic-addon-e">
+                                    </div>
+                                </div>
+                                <div class="col-md-2">
+                                    <div class="input-group input-group-sm mb-2">
+                                        <div class="input-group-prepend">
+                                            <span class="input-group-text" id="basic-addon-speed">speed</span>
+                                        </div>
+                                        <input name="speed" type="text" class="form-control form-control-sm" placeholder="0" aria-label="speed" aria-describedby="basic-addon-speed">
+                                    </div>
+                                </div>
+                                <div class="col-md-2">
+                                    <div class="input-group input-group-sm mb-3">
+                                        <div class="input-group-prepend">
+                                            <button class="btn btn-secondary" id="basic-addon-angle" type="button">turn</button>
+                                        </div>
+                                        <input name="angle" type="text" class="form-control form-control-sm" placeholder="0.00" aria-label="angle" aria-describedby="basic-addon-angle">
+                                    </div>
+                                </div>
+                                
+                                <!--<div class="col-md-2">
+                                    <div class="input-group input-group-sm mb-2">
+                                        <div class="input-group-prepend">
+                                            <span class="input-group-text" id="basic-addon-cp">cp</span>
+                                        </div>
+                                        <input name="cp" type="text" class="form-control form-control-sm" placeholder="0" aria-label="cp" aria-describedby="basic-addon-cp">
+                                    </div>
+                                </div>-->
+                            </div>
 
-      /* syntax coloring rules */
-      .bitty-keywords {
-        font-weight: bold;
-        color: rgb(105, 105, 1);
-      }
-      .bitty-strings {
-        color: #c356be;
-        font-style: italic;
-      }
-      .bitty-comments {
-        color: #939292;
-        font-style: italic;
-      }
+                            <div class="row">
+                                <div class="col-md-3">
+                                    <div class="input-group input-group-sm mb-3">
+                                        <div class="input-group-prepend">
+                                            <button class="btn btn-secondary" id="basic-addon-temphot" type="button">head temp</button>
+                                        </div>
+                                        <input name="temphot" type="text" class="form-control form-control-sm" placeholder="0.00" aria-label="temphot" aria-describedby="basic-addon-temphot">
+                                    </div>
+                                </div>
+                                <div class="col-md-2">
+                                    <input type="text" name="temphot-target" readonly class="form-control form-control-sm" value="0.00">
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="input-group input-group-sm mb-3">
+                                        <div class="input-group-prepend">
+                                            <button class="btn btn-secondary" id="basic-addon-tempbed" type="button">bed temp</button>
+                                        </div>
+                                        <input name="tempbed" type="text" class="form-control form-control-sm" placeholder="0.00" aria-label="tempbed" aria-describedby="basic-addon-tempbed">
+                                    </div>
+                                </div>
+                                <div class="col-md-2">
+                                    <input type="text" name="tempbed-target" readonly class="form-control form-control-sm" value="0.00">
+                                </div>
+                                
+                                <div class="col-md-2">
+                                    <div class="input-group input-group-sm mb-3">
+                                        <div class="input-group-prepend">
+                                            <button class="btn btn-secondary" id="basic-addon-retract" type="button">retract</button>
+                                        </div>
+                                        <input name="retract" type="text" class="form-control form-control-sm" placeholder="0.00" aria-label="retract" aria-describedby="basic-addon-retract">
+                                    </div>
+                                </div>
+                             
+                            </div>
+                            
+                        </form>
+                    </div>
 
-      /* 
- * fancy pseudo-selector to not color numbers when they are inside
- * coments or strings
- */
-      .bitty-numbers:not(.bitty-strings > span, .bitty-comments > span) {
-        color: #faa;
-      }
+                    <div id="tab-messages-pane" class="tab-content col-md-12">
+                        <div id="printer" class="tab-pane fade show active" role="tabpanel" aria-labelledby="pills-info-tab">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <button id="clear-btn" class="btn btn-lg btn-warning">clear queue</button>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-3">
+                                    <button id="temp-display-btn" class="btn-sm btn-primary" data-toggle="button">Poll Temperature</button>
+                                </div>
+                                <div class="col-md-3">
+                                    <button id="log-requests-btn" class="btn-sm btn-primary" data-toggle="button">Display ajax requests</button>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-3">
+                                    <button id="refresh-serial-ports-btn" class="btn btn-sm btn-primary" type="button">Refresh Ports</button>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="btn-group">
+                                        <button type="button" id="serial-port-dropdown" class="btn btn-sm dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                            Choose printer port:
+                                            <span class="caret"></span>
+                                        </button>
+                                        <ul id="serial-ports-list" class="dropdown-menu" aria-labelledby="serial-port-dropdown">
 
-      .bitty-active {
-        background: #662;
-        /* opacity: 0.2; */
-      }
+                                        </ul>
+                                    </div>
+                                </div>
+                                <div class="col-md-2">
+                                    <div class="dropdown">
+                                        <button class="btn btn-sm btn-secondary dropdown-toggle" type="button" id="baudrate-dropdown" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                            Rate:
+                                        </button>
+                                        <div id="baudrates-list" class="dropdown-menu" aria-labelledby="baudrate-dropdown"></div>
+                                    </div>
+                                </div>
+                                <div class="col-md-2">
+                                    <button id="connect-btn" type="button" class="btn btn-sm btn-warning" data-toggle="button" aria-pressed="false" autocomplete="off">connect</button>
+                                </div>
+                                <div class="col-md-2">
+                                    <div class="dropdown">
+                                        <button class="btn btn-sm btn-secondary dropdown-toggle" type="button" id="gcodelevel-dropdown" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                            GCode log level:
+                                        </button>
+                                        <div id="gcodelevel-list" class="dropdown-menu" aria-labelledby="gcodelevel-dropdown"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- session code editor -->
+                        <div id="code-editor-area" class="tab-pane fade show" role="tabpanel" aria-labelledby="pills-editor-tab">
+                            <div class="row">
+                                <div class="col-md-12">
+                                    <div id="modal-errors"></div>
+                                    <div id="code-editor" class="bitty-editor"
+                                        contenteditable="true"
+                                        spellcheck="false">
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-12">Key buffer: <span id="command-display-default"></span></div>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-8 instructions-panel">
+                                    Highlight lines of code and hit <kbd>cmd</kbd> or <kbd>ctrl</kbd>-<kbd>enter</kbd> to <button id="sendCode" class="btn btn-success btn-sm">send</button> them
+                                </div>
+                                <div class="col-md-2 instructions-panel"><button class="btn btn-success btn-sm btn-download">download</button></div>
+                            </div>
+                        </div>
 
-      p {
-        color: #662;
-        font-size: smaller;
-      }
-    </style>
-  </head>
-  <body>
-    <div id="controls">
-      <button id="start-btn">START</button>
-      <button name="editor-1" id="editor-1" class="disabled">editor 1</button>
-      <button name="editor-2" id="editor-2">editor 2</button>
-      
-      <button id="download-btn" class="disabled">DOWNLOAD GCODE</button>
-      <p>TRANSPILED: <span id="output"></span></p>
-    </div>
-    <div id="app">
-      <div id="preview"></div>
-      <!-- <button id="run-btn">RUN</button> -->
+                        <!-- history code editor-->
+                        <div id="history-code-editor-area" class="tab-pane fade show active hideAfterLoad" role="tabpanel" aria-labelledby="pills-history-editor-tab">
+                            <div class="row">
+                                <div class="col-12 cm-contain">
+                                    <form>
+                                        <div id="history-code-editor" class="bitty-editor one"
+                                        contenteditable="true"
+                                        spellcheck="false">
+                                    // all the code you've run will appear here
 
-      <div id="editor-container">
-        <div
-          class="bitty-editor one"
-          contenteditable="true"
-          spellcheck="false"
-        ></div>
-        <div
-          class="bitty-editor two"
-          contenteditable="true"
-          spellcheck="false"
-        ></div>
-      </div>
+                                    </div>
+                                    </form>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-12">Key buffer: <span id="command-display-history"></span></div>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-2 code-errors-panel"><p class="lead font-weight-bold">Errors:</p></div>
+                                <div class="col-md-10 code-errors"></div>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-2 instructions-panel"></div>
+                                <div class="col-md-8 instructions-panel">
+                                    Highlight lines of code and hit <kbd>cmd</kbd> or <kbd>ctrl</kbd>-<kbd>enter</kbd> to <button id="sendCode" class="btn btn-success btn-sm">send</button> them
+                                </div>
+                                <div class="col-md-2 instructions-panel"><button class="btn btn-success btn-sm btn-download">download</button></div>
+                            </div>
+                        </div>
 
-      <!-- <textarea name="code" id="code" cols="80" rows="10">
-        # start | dist 50 | speed 40 | draw
-      </textarea> -->
-    </div>
-    <script type="module" src="/src/main.js"></script>
-  </body>
+                        <!-- gcode code editor-->
+                        <div id="gcode-editor-area" class="tab-pane fade show active hideAfterLoad" role="tabpanel" aria-labelledby="pills-gcode-editor-tab">
+                            <div class="row">
+                                <div class="col-12 cm-contain">
+                                    <div id="visualiser"></div>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-12">Key buffer: <span id="command-display-gcode"></span></div>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-2 instructions-panel"></div>
+                                <div class="col-md-8 instructions-panel">
+                                    Highlight lines of code and hit <kbd>cmd</kbd> or <kbd>ctrl</kbd>-<kbd>enter</kbd> to <button id="sendCode" class="btn btn-success btn-sm">send</button> them
+                                </div>
+                                <div class="col-md-2 instructions-panel"><button class="btn btn-success btn-sm btn-download">download</button></div>
+                            </div>
+                        </div>
+
+                    </div> <!-- close tab menus -->
+                    <!-- printer info panel-->
+
+                </div>
+                <div class="panel-l"></div>
+                <div class="panel-b-l"></div>
+            </div>
+
+            <div class="col-3 col-md-4">
+                <div id="inbox" class="box">
+                    <div style="position:relative;height:100%">
+                        <ul class="nav nav-tabs flex-column flex-sm-row" id="pconsole" role="tablist">
+                            <li class="nav-item">
+                                <a class="flex-sm-fill text-sm-center nav-link active" id="info-tab" data-toggle="pill" href="#info" role="tab" aria-controls="info" aria-selected="true">info</a>
+                            </li>
+                            <li class="flex-sm-fill text-sm-center nav-item">
+                                <a class="nav-link" id="errors-tab" data-toggle="pill" href="#errors" role="tab" aria-controls="errors" aria-selected="false">errors</a>
+                            </li>
+                            <li class="flex-sm-fill text-sm-center nav-item">
+                                <a class="nav-link" id="commands-tab" data-toggle="pill" href="#commands" role="tab" aria-controls="commands" aria-selected="false">commands</a>
+                            </li>
+                            <li class="flex-sm-fill text-sm-center nav-item dropdown">
+                                <a class="nav-link dropdown-toggle" data-toggle="dropdown" href="#" role="button" aria-haspopup="true" aria-expanded="false">Clear:</a>
+                                <div class="dropdown-menu">
+                                    <a class="dropdown-item flex-sm-fill text-sm-left" href="#" onclick="$('#info > ul').empty();">clear info</a>
+                                    <a class="dropdown-item flex-sm-fill text-sm-left" href="#" onclick="$('#errors > ul').empty();">clear errors</a>
+                                    <a class="dropdown-item flex-sm-fill text-sm-left" href="#" onclick="$('#commands > ul').empty();">clear commands</a>
+                                </div>
+                            </li>
+                        </ul>
+                        <!-- Tab panes -->
+
+                        <div id="tab-messages-pane" class="tab-content">
+                            <div class="tab-pane fade show active" id="info" role="tabpanel" aria-labelledby="pills-info-tab">
+                                <!-- <div id="tasks">
+                                    <p class="lead">tasks</p>
+                                    <ul></ul>
+                                </div> -->
+                                <div class="credits-box">
+                                    <p class="lead">The Printer Jam</p>
+                                    <p class="credits">BITPRINT X Cassiel</p>
+                                    <div id="header" style="width: 100%;height: 0.33rem;margin:0; padding:0;"></div>
+                                </div>
+                                
+                                <ul></ul>
+                            </div>
+                            <div class="tab-pane fade" id="errors" role="tabpanel" aria-labelledby="pills-errors-tab">
+                                <ul></ul>
+                            </div>
+                            <div class="tab-pane fade" id="commands" role="tabpanel" aria-labelledby="pills-commands-tab">
+                                <ul></ul>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="panel-r lines"></div>
+                    <div class="panel-b-r"></div>
+                </div>
+
+            </div> <!-- fullheight box-->
+        </div> <!-- close col -->
+        <!-- end input-->
+    </div><!-- end 1st row -->
+    <!-- end main container-->
+
+</body>
 </html>
