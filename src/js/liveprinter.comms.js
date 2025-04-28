@@ -19,7 +19,6 @@
  * under the License.
  */
 
-
 import {
   logInfo,
   logError,
@@ -217,11 +216,13 @@ export async function setSerialPort({ port, baudRate }) {
   const response = await sendJSONRPC(JSON.stringify(message));
   let result = false;
 
-  if (response.result && response.result.length > 0 && response.result[0] !== "closed") {
-    result = true;  
-  } 
-  else 
-  {
+  if (
+    response.result &&
+    response.result.length > 0 &&
+    response.result[0] !== "closed"
+  ) {
+    result = true;
+  } else {
     logError("bad response from setSerialPort():");
     logError(JSON.stringify(response));
     throw new Error(
@@ -240,31 +241,30 @@ export async function setSerialPort({ port, baudRate }) {
  * @alias comms:setSerialPort
  */
 export async function closeSerialPort() {
-    const message = {
-        'jsonrpc': '2.0',
-        'id': 2,
-        'method': 'close-serial-port',
-        'params': []
-    };
+  const message = {
+    jsonrpc: "2.0",
+    id: 2,
+    method: "close-serial-port",
+    params: [],
+  };
 
-    const response = await sendJSONRPC(JSON.stringify(message));
-    if (
-      undefined === response.result ||
-      undefined === response.result[0] ||
-      typeof response.result[0] === "string"
-    ) {
-      logError("bad response from closeSerialPort():");
-      logError(JSON.stringify(response));
-      throw new Error(
-        "bad response from closeSerialPort():" + JSON.stringify(response)
-      );
-    } else {
-      loginfo("port closed!");
-    }
-  
-    return response;
+  const response = await sendJSONRPC(JSON.stringify(message));
+  if (
+    undefined === response.result ||
+    undefined === response.result[0] ||
+    typeof response.result[0] === "string"
+  ) {
+    logError("bad response from closeSerialPort():");
+    logError(JSON.stringify(response));
+    throw new Error(
+      "bad response from closeSerialPort():" + JSON.stringify(response)
+    );
+  } else {
+    loginfo("port closed!");
   }
 
+  return response;
+}
 
 /**
  * Set the serial port from the server (or refresh it) and display in the GUI (the listener will take care of that)
@@ -376,23 +376,22 @@ export async function sendGCodeRPC(gcode) {
   if (vars.logAjax) logCommands(`SENDING gcode ${gcode}`);
 
   if (Array.isArray(gcode)) {
-    
     const results = await Promise.all(
-        gcode.map(async (_gcode) => {
+      gcode.map(async (_gcode) => {
         if (!_gcode.startsWith(";")) {
           // don't send comments
           gcodeObj.params = [_gcode];
           //debug(gcodeObj);
           let response;
           try {
-            response = await sendJSONRPC(JSON.stringify(gcodeObj));
+            const reply = await sendJSONRPC(JSON.stringify(gcodeObj));
+            response = reply.result[0];
+          } catch (err) {
+            logError(err);
+            doError(err);
+            response = Promise.reject(err.message);
           }
-          catch(err) {
-              logError(err);
-              doError(err);
-              response = Promise.reject(err.message);
-          }
-          
+
           return response;
         }
       })
@@ -400,13 +399,20 @@ export async function sendGCodeRPC(gcode) {
     if (vars.logAjax) logCommands(`DONE gcode array ${gcode}`);
 
     return results;
-    
   } else {
     //debug("single line gcode");
     if (!gcode.startsWith(";")) {
       // don't send comments
       gcodeObj.params = [gcode];
-      const response = await sendJSONRPC(JSON.stringify(gcodeObj));
+      let response;
+      try {
+        const reply = await sendJSONRPC(JSON.stringify(gcodeObj));
+        response = reply.result[0];
+      } catch (err) {
+        logError(err);
+        doError(err);
+        response = Promise.reject(err.message);
+      }
       if (vars.logAjax) logCommands(`DONE gcode ${gcode}`);
       return response;
     }
@@ -424,7 +430,7 @@ export async function scheduleGCode(gcode, priority = 4) {
   // 0-9, lower higher
   const reqId = "req" + vars.requestId++;
 
-  let result = ""; // result to be handled later -- see handleGCodeResponse 
+  let result = null; // result to be handled later -- see handleGCodeResponse
 
   if (vars.logAjax) logCommands(`SENDING ${reqId}`);
   return scheduleFunction(
@@ -436,140 +442,4 @@ export async function scheduleGCode(gcode, priority = 4) {
     }
   );
 }
-
-/*
- * START SETTING UP SESSION VARIABLES ETC>
- * **************************************
- *
- */
-
-//////////////////////////////////////////////////////////////////////
-// Listeners for printer events  /////////////////////////////////////
-//////////////////////////////////////////////////////////////////////
-//////////////////////////////////////////////////////////////////////
-
-// movement functions triggered at end of movement GCode reponse
-let positionEventListeners = [];
-
-let okEventListeners = [];
-
-let otherEventListeners = [];
-
-//------------------------------------------------
-// NOTE: these could be more general on('event', func)
-
-/**
- * Add listener function to run when 'position' events are received from the printer server (these are scheduled to be run by the limiter)
- * @param {Function} listener
- * @alias comms:onPosition
- */
-export const onPosition = function (listener) {
-  if (positionEventListeners.includes(listener)) return;
-
-  positionEventListeners.push(listener);
-};
-
-/**
- * Remove a listener function from 'position' events queue
- * @param {Function} listener
- * @alias comms:offPosition
- */
-export const offPosition = (listener) => {
-  positionEventListeners = positionEventListeners.filter(
-    (list) => list !== listener
-  );
-};
-
-/**
- * Add listener function to run when 'position' events are received from the printer server (these are scheduled to be run by the limiter)
- * @param {Function} listener
- * @alias comms:onOk
- */
-export const onOk = function (listener) {
-  if (okEventListeners.includes(listener)) return;
-
-  okEventListeners.push(listener);
-};
-
-/**
- * Remove listener function from ok events queue
- * @param {Function} listener
- * @alias comms:offOk
- */
-export const offOk = (listener) => {
-  okEventListeners = okEventListeners.filter((list) => list !== listener);
-};
-
-/**
- * Trigger the ok event for all ok listeners
- * @param {Anything} data
- * @return {Boolean} success
- * @alias comms:okEvent
- */
-export const okEvent = async function (data) {
-  let handled = false;
-  try {
-    await Promise.all(
-      okEventListeners.map(async (v) => {
-        scheduleFunction({ priority: 1, weight: 1, id: codeIndex++ }, v, data);
-      })
-    );
-
-    debug("ok event handled: " + data); // other response
-    handled = true;
-  } catch (err) {
-    err.message = "Error in ok event handler:" + err.message;
-    doError(err);
-    handled = false;
-  }
-  return handled;
-};
-
-/**
- * Add listener function to run when 'other' (unmatched) events are received from the printer server (these are not scheduled to be run by the limiter)
- * @param {Function} listener
- * @alias comms:onOther
- */
-export const onOther = function (listener) {
-  if (otherEventListeners.includes(listener)) return;
-
-  otherEventListeners.push(listener);
-};
-
-/**
- * Remove listener function from 'other' (unmatched) events queue
- * @param {Function} listener
- * @alias comms:offOther
- */
-export const offOther = (listener) => {
-  otherEventListeners = otherEventListeners.filter((list) => list !== listener);
-};
-
-/**
- * Clear all listeners for a specific event type: codeDone, ok, other, codeQueued, position.
- * @param {*} eventType
- * @alias comms:clearEvent
- */
-export const clearEvent = function (eventType) {
-  switch (eventType) {
-    case "codeDone":
-      doneListeners.length = 0;
-      break;
-    case "ok":
-      okEventListeners.length = 0;
-      break;
-    case "other":
-      otherEventListeners.length = 0;
-      break;
-    case "codeQueued":
-      queuedListeners.length = 0;
-      break;
-    case "position":
-      positionEventListeners.length = 0;
-      break;
-    default:
-      doError(`Bad event type: ${eventType}`);
-      break;
-  }
-};
 

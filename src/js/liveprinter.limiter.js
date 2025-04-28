@@ -1,5 +1,6 @@
 import Bottleneck from "bottleneck";
 import { doError, logError, logInfo } from "./logging-utils.js";
+import { codeDoneEvent, codeQueuedEvent } from "./liveprinter.listeners.js";
 
 
 //-------------------------------------------------------------------------------------------------
@@ -8,51 +9,6 @@ import { doError, logError, logInfo } from "./logging-utils.js";
 //-------------------------------------------------------------------------------------------------
 
 globalThis.maxCodeWaitTime = 5; // max time the limiter waits for scheduled code before dropping job -- in ms
-
-
-let doneListeners = [];
-
-/**
- * Add listener function to run when 'codeDone' events are received from the limiter (not scheduled to be run by the limiter!)
- * @param {Function} listener
- * @alias comms:onCodeDone
- */
-export const onCodeDone = function (listener) {
-  if (doneListeners.includes(listener)) return;
-
-  doneListeners.push(listener);
-};
-
-/**
- * Remove a listener from 'codeDone' events queue
- * @param {Function} listener
- * @alias comms:offCodeQueued
- */
-export const offCodeDone = (listener) => {
-  doneListeners = doneListeners.filter((list) => list !== listener);
-};
-
-let queuedListeners = [];
-
-/**
- * Add listener function to run when 'codeQueued' events are received from the limiter (not scheduled to be run by the limiter!)
- * @param {Function} listener
- * @alias comms:onCodeQueued
- */
-export const onCodeQueued = function (listener) {
-  if (queuedListeners.includes(listener)) return;
-
-  queuedListeners.push(listener);
-};
-
-/**
- * Remove a listener from 'codeQueued' events queue
- * @param {Function} listener
- * @alias comms:offCodeQueued
- */
-export const offCodeQueued = (listener) => {
-  queuedListeners = queuedListeners.filter((list) => list !== listener);
-};
 
 
 /**
@@ -120,23 +76,13 @@ export function initLimiter() {
     logInfo(`queued: ${_limiter.queued()}`);
     info.queued = _limiter.queued();
 
-    try {
-      await Promise.all(queuedListeners.map(async (v) => v(info))); // don't schedule or we'll be in a loop!
-    } catch (err) {
-      err.message = "Error in queued event:" + err.message;
-      doError(err);
-    }
+    await codeQueuedEvent(info)
   });
 
   _limiter.on("done", async function (info) {
     info.queued = _limiter.queued();
     //logInfo(`done running command: ${_limiter.queued()}`);
-    try {
-      await Promise.all(doneListeners.map(async (v) => v(info))); // don't schedule or we'll be in a loop!
-    } catch (err) {
-      err.message = "Error in done event:" + err.message;
-      doError(err);
-    }
+    await codeDoneEvent(info);
   });
   return _limiter;
 }

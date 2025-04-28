@@ -15,13 +15,10 @@ import {
 } from "./liveprinter.ui.js";
 
 import {
-  onPosition,
-} from "./liveprinter.comms";
-
-import {
     onCodeDone,
-    onCodeQueued
-} from './liveprinter.limiter.js';
+    onCodeQueued,
+    onPosition
+} from './liveprinter.listeners.js';
 
 import {
   setDebug,
