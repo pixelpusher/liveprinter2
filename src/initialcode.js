@@ -137,3 +137,50 @@ log('CHALICE OF NOISE')
 //////////////////////////////////////////////////////////////////////
 
 `;
+
+export const loops = `
+ 
+ 
+# bpm 150
+
+global bail = false;
+  
+# moveto x:(lp.cx-50) y:lp.cy z:0.2 speed:50 
+  
+lp.lh = 0.25;
+  
+let notesCtr = 0;
+let durCtr = 0;
+  
+let next = function (n=1) {
+  let notes = ['c4', 'd5', 'e5', 'g4', 'a4', 'd6', 'e4', 'a4'];  
+  notesCtr = (notesCtr + 1) % notes.length;
+  return notes[notesCtr];
+}  
+  
+let dur = function (n=1) {
+  let durs = ['1/4b', '2b', '1b', '1/2b',
+             '1/2b', '1/4b', '1/2b', '1/4b'];  
+  durCtr = (durCtr + 1) % durs.length;
+  return durs[durCtr];
+}  
+ 
+let c = 0;    
+ 
+repeat(128, async ()=> {
+  # speed next() | drawtime dur() | turn (360/12) | elev (Math.PI/88)
+//  await (() => new Promise((resolve) => setTimeout(resolve, delaytime)))();
+  console.log(\`\${c++}\`);
+  if (bail) return;
+})
+  
+//--------------------------------------------------------------------------
+  
+repeat(64, async ()=> {
+  // make the denominator of the 360/x not evenly divisible by 8 (size of notes and durations above )
+  # speed next() | traveltime dur() | turn (360/6) | elev (Math.PI/48)
+//  await (() => new Promise((resolve) => setTimeout(resolve, delaytime)))();
+  console.log(\`\${c++}\`);
+  if (bail) return;
+})
+`;

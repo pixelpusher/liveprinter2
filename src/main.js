@@ -13,7 +13,7 @@ import { transpile } from "lp-language";
 import * as gridlib from "gridlib";
 import * as Tone from "tone";
 import { Logger } from "liveprinter-utils";
-import { initialCode, ual_9_6_24 } from "./initialcode";
+import { initialCode, ual_9_6_24, loops } from "./initialcode";
 import { evalScope, evaluate } from "./evaluate.mjs";
 import { playNotes } from "./sound";
 
@@ -35,9 +35,6 @@ document.addEventListener("DOMContentLoaded", (event) => {
 //--------------------------------------------------
 //---- CODE FROM TEST ------------------------------
 //--------------------------------------------------
-
-// const codeTextArea = document.getElementById("code");
-// codeTextArea.value = ual_9_6_24;
 
 Logger.level = Logger.LOG_LEVEL.error;
 
@@ -142,7 +139,7 @@ async function main() {
   const b1 = bitty.create({
     flashColor: "black",
     flashTime: 100,
-    value: ual_9_6_24,
+    value: loops,
     el: document.querySelector(".one"),
     rules: jsrules,
   });
