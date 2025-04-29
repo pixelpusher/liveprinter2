@@ -3,11 +3,7 @@ import { repeat, numrange, countto, Scheduler } from "liveprinter-utils";
 import { LivePrinter } from "liveprinter-core";
 
 import {
-  doError,
   moveHandler,
-  commandsHandler,
-  printerStateHandler,
-  logerror,
   taskListenerUI,
   initUI,
   blinkElem,
@@ -21,12 +17,7 @@ import {
 } from './liveprinter.listeners.js';
 
 import {
-  setDebug,
-  setDoError,
-  setLogError,
-  setLogCommands,
-  setLogInfo,
-  setLogPrinterState,
+  doError
 } from "./logging-utils.js";
 
 import { initEditors } from "./liveprinter.editor";
@@ -48,13 +39,6 @@ globalThis.$ = globalThis.jquery = $;
   // Logger.debug(testdata);
 
   Logger.level = Logger.LOG_LEVEL.info;
-
-  setDebug(Logger.debug);
-  setDoError(doError);
-  setLogError(logerror);
-  setLogInfo(Logger.info);
-  setLogCommands(commandsHandler.log);
-  setLogPrinterState(printerStateHandler);
 
   globalThis.repeat = repeat;
   globalThis.numrange = numrange;
@@ -102,44 +86,7 @@ globalThis.$ = globalThis.jquery = $;
   //     { gcodeEvent: async (gcode) => editors.recordGCode(editors.GCodeEditor, gcode) }
   // );
 
-  onPosition(async (v) => moveHandler(v));
-  onCodeDone(async (v) => {
-    const dateStr = new Intl.DateTimeFormat("en-US", {
-      hour: "numeric",
-      minute: "numeric",
-      second: "numeric",
-      hour12: false,
-    }).format(new Date(Date.now()));
-
-    let msg;
-    if (v.queued === 0) {
-      msg = `done: no code running [${dateStr}]`;
-    } else {
-      msg = `done: other code blocks in queue: ${v.queued} [${dateStr}]`;
-    }
-    document.getElementById("working-tab").innerHTML = msg;
-    blinkElem($("#working-tab"));
-    //loginfo(`done: code blocks running: ${v.queued}`);
-  });
-  onCodeQueued(async (v) => {
-    const dateStr = new Intl.DateTimeFormat("en-US", {
-      hour: "numeric",
-      minute: "numeric",
-      second: "numeric",
-      hour12: false,
-    }).format(new Date(Date.now()));
-
-    document.getElementById(
-      "working-tab"
-    ).innerHTML = `queued: code block running (queued: ${v.queued}) [${dateStr}]`;
-    //loginfo(`queued: code blocks running: ${v.queued}`);
-  });
-
-  // With the live server, this just blinks constantly...
-  // liveprintercomms.onOk(async () => {
-  //     blinkElem($("#working-tab"));
-  // });
-
+  
   ///----------------------------------------------------------------------------
   ///--------Start running things------------------------------------------------
   ///----------------------------------------------------------------------------

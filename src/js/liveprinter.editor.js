@@ -9,9 +9,10 @@
  */
 import $  from "jquery";
 import * as gridlib from "gridlib";
+import { debug } from "./logging-utils.js";
 import { buildEvaluateFunction, evalScope } from "./evaluate.mjs";
 import { cleanGCode, Logger } from "liveprinter-utils";
-import { downloadFile, blinkElem, clearError, doError } from "./liveprinter.ui";
+import { downloadFile, blinkElem, clearError } from "./liveprinter.ui";
 import { makeVisualiser } from "vizlib";
 import { transpile } from "lp-language";
 import { schedule } from "./liveprinter.limiter.js";
@@ -104,12 +105,11 @@ function recordGCode(editor, gcode) {
 
 /**
  * This function takes the highlighted "local" code from the editor and runs the compiling and error-checking functions.
- * @param {Editor} editor
- * @param {Function} callback
+ * @param {String} code
  * @param {Boolean} immediate If true, run immediately, otherwise schedule to run
  * @returns {Boolean} success
  */
-async function runCode(code) {
+async function runCode(code, immediate=false) {
   // if printer isn't connected, we shouldn't run!
   const printerConnected = $("#header").hasClass("blinkgreen");
   if (!printerConnected) {
@@ -134,19 +134,18 @@ async function runCode(code) {
     // replace globals in js
     code = code.replace(/^[ ]*global[ ]+/gm, "globalThis.");
 
-    Logger.debug("code before pre-processing-------------------------------");
-    Logger.debug(code);
-    Logger.debug("========================= -------------------------------");
+    debug("code before pre-processing-------------------------------");
+    debug(code);
+    debug("========================= -------------------------------");
 
     const results = await buildEvaluateFunction(code, transpile);
     const resultFunction = results.result;
-    Logger.debug(
+    debug(
       `Evaluated code[immediate]: ${JSON.stringify(results.code, null, 2)}`
     );
 
     if (immediate) {
       await resultFunction();
-      // console.log( 'editor 1:', txt )
     } else {
       await schedule(()=>resultFunction());
     }
@@ -192,8 +191,6 @@ function storageAvailable(type) {
     );
   }
 }
-
-export let immediate = false; // immediate evaluation (ignore queue) or add to queue
 
 /**
  * Initialise editors and events, etc.
@@ -281,23 +278,35 @@ export async function initEditors(lp) {
   const CodeEditor = bitty.create({
     flashColor: "black",
     flashTime: 100,
-    value: "code editor",
+    value: localStorage.getItem('CodeEditor') || 'CODE',
     el: document.querySelector("#code-editor"),
     rules: jsrules,
   });
+  CodeEditor.name= 'CodeEditor';
 
   const HistoryCodeEditor = bitty.create({
     flashColor: "black",
     flashTime: 100,
-    value: "code editor",
+    value: localStorage.getItem('HistoryCodeEditor') || 'CODE',
     el: document.querySelector("#history-code-editor"),
     rules: jsrules,
   });
+  HistoryCodeEditor.name = 'HistoryCodeEditor';
 
   const editors = [CodeEditor, HistoryCodeEditor];
 
   // map code evaluation
-  editors.map((v) => v.subscribe("run", runCode));
+  editors.map((v) => {
+    v.subscribe("run", runCode);
+    v.subscribe('keyup',  (e)=>{
+      debug(`${v.name} key up: ${e.target.innerText}`);
+      localStorage.setItem(v.name, e.target.innerText);
+    });
+    v.keyManager.register('shift+enter',(e)=>{
+      debug(`immediate mode code! ${e.target.innerText}`);
+      runCode(e.target.innerText, true);
+    });
+  });
 
   ///----------------------------------------------------------
   ///------------Examples list---------------------------------

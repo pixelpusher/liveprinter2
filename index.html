@@ -37,13 +37,16 @@
                             <a id="printer-tab" class="flex-sm-fill text-sm-center nav-link active lightnav" data-toggle="pill" href="#printer" role="tab" aria-controls="printer" aria-selected="false">printer settings</a>
                         </li>
                         <li class="nav-item">
-                            <a id="history-editor-tab" class="flex-sm-fill text-sm-center nav-link lightnav" data-toggle="pill" href="#history-code-editor-area" role="tab" aria-controls="history-code-editor-area" aria-selected="false">history code editor</a>
+                            <a id="gcode-editor-tab" class="flex-sm-fill text-sm-center nav-link lightnav" data-toggle="pill" href="#gcode-editor-area" role="tab" aria-controls="gcode-editor-area" aria-selected="false">gcode</a>
                         </li>
                         <li class="nav-item">
-                            <a id="gcode-editor-tab" class="flex-sm-fill text-sm-center nav-link lightnav" data-toggle="pill" href="#gcode-editor-area" role="tab" aria-controls="gcode-editor-area" aria-selected="false">gcode editor</a>
+                            <a id="history-editor-tab" class="flex-sm-fill text-sm-center nav-link lightnav" data-toggle="pill" href="#history-code-editor-area" role="tab" aria-controls="history-code-editor-area" aria-selected="false">history</a>
+                        </li>
+                        <li class="nav-item">
+                            <a id="gcode-editor-tab" class="flex-sm-fill text-sm-center nav-link lightnav" data-toggle="pill" href="#visualiser-area" role="tab" aria-controls="visualiser-area" aria-selected="false">visualiser</a>
                         </li>
                         <li class="nav-item btn-group">
-                            <a id="editor-tab" class="flex-sm-fill text-sm-center nav-link lightnav" data-toggle="pill" href="#code-editor-area" role="tab" aria-controls="code-editor-area" aria-selected="true">code editor</a>
+                            <a id="editor-tab" class="flex-sm-fill text-sm-center nav-link lightnav" data-toggle="pill" href="#code-editor-area" role="tab" aria-controls="code-editor-area" aria-selected="true">code</a>
                             <a id="examples-dropdown" class="flex-sm-fill text-sm-center nav-link lightnav active dropdown-toggle dropdown-toggle-split" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" role="tab">
                                 <span class="sr-only">Toggle Dropdown</span>
                             </a>
@@ -69,7 +72,7 @@
                                 <a id="save-session" class="dropdown-item purplink"><strong>save current</strong></a>
                             </div>
                         </li>
-                        <li class="nav-item"><button id="python-mode-btn" type="button" class="btn btn-sm btn-warning" data-toggle="button" aria-pressed="false" autocomplete="off">javascript</button></li>
+                        <!-- <li class="nav-item"><button id="python-mode-btn" type="button" class="btn btn-sm btn-warning" data-toggle="button" aria-pressed="false" autocomplete="off">javascript</button></li> -->
                         <li class="nav-item">
                             <a id="working-tab" class="flex-sm-fill text-sm-center nav-link lightnav" data-toggle="pill" href="#" role="tab" aria-selected="false">...working</a>
                         </li>
@@ -226,6 +229,14 @@
                                 </div>
                             </div>
                         </div>
+
+                        <div id="visualiser-area" class="tab-pane fade show" role="tabpanel" aria-labelledby="pills-editor-tab">
+                            <div class="row">
+                                <div class="col-md-12">
+                                    <div id="visualiser"></div>
+                                </div>
+                            </div>
+                        </div>
                         <!-- session code editor -->
                         <div id="code-editor-area" class="tab-pane fade show" role="tabpanel" aria-labelledby="pills-editor-tab">
                             <div class="row">
@@ -252,14 +263,10 @@
                         <div id="history-code-editor-area" class="tab-pane fade show active hideAfterLoad" role="tabpanel" aria-labelledby="pills-history-editor-tab">
                             <div class="row">
                                 <div class="col-12 cm-contain">
-                                    <form>
                                         <div id="history-code-editor" class="bitty-editor one"
                                         contenteditable="true"
                                         spellcheck="false">
-                                    // all the code you've run will appear here
-
                                     </div>
-                                    </form>
                                 </div>
                             </div>
                             <div class="row">
@@ -282,7 +289,10 @@
                         <div id="gcode-editor-area" class="tab-pane fade show active hideAfterLoad" role="tabpanel" aria-labelledby="pills-gcode-editor-tab">
                             <div class="row">
                                 <div class="col-12 cm-contain">
-                                    <div id="visualiser"></div>
+                                        <div id="gcode-editor" class="bitty-editor one"
+                                        contenteditable="true"
+                                        spellcheck="false">
+                                    </div>
                                 </div>
                             </div>
                             <div class="row">

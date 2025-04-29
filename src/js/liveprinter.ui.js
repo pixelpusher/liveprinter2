@@ -34,14 +34,24 @@ import {
   sendGCodeRPC,
 } from "./liveprinter.comms";
 
-import { logInfo, logError } from "./logging-utils.js";
-
 import {
-  scheduleFunction,
-  schedule,
-  restartLimiter,
-} from "./liveprinter.limiter.js";
-import { okEvent, otherEvent, positionEvent } from "./liveprinter.listeners.js";
+  debug,
+  setDoError,
+  setLogInfo,
+  logError,
+  setLogCommands,
+  setLogPrinterState,
+} from "./logging-utils.js";
+
+import { restartLimiter } from "./liveprinter.limiter.js";
+import {
+  okEvent,
+  otherEvent,
+  positionEvent,
+  onCodeDone,
+  onCodeQueued,
+  onPosition,
+} from "./liveprinter.listeners.js";
 
 export let infoListElement = "#info > ul"; // for logging info to GUI
 
@@ -87,7 +97,7 @@ export function clearError() {
  * @see https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/SyntaxError
  * @memberOf LivePrinter
  */
-export function doError(e) {
+export function guiError(e) {
   if (typeof e !== "object") {
     $("#modal-errors").prepend(
       "<div class='alert alert-warning alert-dismissible fade show' role='alert'>" +
@@ -148,7 +158,6 @@ export function doError(e) {
     }
     */
 }
-window.doError = doError;
 
 //////////////////////////////////////////////////////////////////////
 // Listeners for printer events  /////////////////////////////////////
@@ -257,7 +266,6 @@ export const commandsHandler = {
 export const moveHandler = (response) => {
   let result = true;
   try {
-  
     printer.x = parseFloat(response.payload.pos.x);
     printer.y = parseFloat(response.payload.pos.y);
     printer.z = parseFloat(response.payload.pos.z);
@@ -325,7 +333,7 @@ export const portsListHandler = function (event) {
       const me = $(this);
       console.log(`serial port btn clicked ${me}`);
 
-      loginfo("opening serial port " + me.html());
+      info("opening serial port " + me.html());
       const baudRate = $("#baudrates-list .active").data("rate");
 
       Logger.debug("baudRate:");
@@ -399,7 +407,7 @@ export const portsListHandler = function (event) {
     newButton.click(async function (e) {
       e.preventDefault();
       const me = $(this);
-      loginfo("setting gcode log level " + me.html());
+      info("setting gcode log level " + me.html());
       const level = me.data("level");
 
       Logger.debug(`level: ${level}`);
@@ -430,7 +438,7 @@ export const portsListHandler = function (event) {
  * @memberOf LivePrinter
  */
 export const printerStateHandler = function (stateEvent) {
-  //loginfo(JSON.stringify(stateEvent));
+  //info(JSON.stringify(stateEvent));
 
   if (stateEvent.result === undefined) {
     logerror("bad state event" + JSON.stringify(stateEvent));
@@ -675,7 +683,7 @@ export const taskListenerUI = {
  * @param {String} text Text to log in the right info panel
  * @memberOf LivePrinter
  */
-export function loginfo(text) {
+export function info(text) {
   //Logger.debug("LOGINFO-----------");
   Logger.debug(text);
 
@@ -693,7 +701,7 @@ export function loginfo(text) {
   }
 }
 
-window.loginfo = loginfo; //cheat, for livecoding...
+window.info = info; //cheat, for livecoding...
 
 /**
  * Log a line of text to the logging panel on the right side
@@ -714,9 +722,6 @@ export function logerror(text) {
     errorHandler.error({ time: Date.now(), message: text + "" });
   }
 }
-
-// make global
-window.logerror = logerror; //cheat, for livecoding...
 
 /**
  * Attach an external script (and remove it quickly). Useful for adding outside libraries.
@@ -803,6 +808,11 @@ export function blinkElem($elem, speed, callback) {
  *  undefined, will crearte new one.
  */
 export async function initUI(_printer, _scheduler) {
+  setDoError(guiError);
+  setLogInfo(info);
+  setLogCommands(commandsHandler.log);
+  setLogPrinterState(printerStateHandler);
+
   if (!_printer) {
     logerror("FATAL error: no liveprinter object in gui init()!");
     return;
@@ -824,7 +834,7 @@ export async function initUI(_printer, _scheduler) {
 
   $("#connect-btn").on("click", async function (e) {
     e.preventDefault();
-    loginfo("OPENING SERIAL PORT");
+    info("OPENING SERIAL PORT");
 
     const notCalledFromCode = !(
       e.namespace !== undefined && e.namespace === ""
@@ -837,7 +847,7 @@ export async function initUI(_printer, _scheduler) {
       if (connected) {
         const selectedPort = $("#serial-ports-list .active");
         if (selectedPort.length > 0) {
-          loginfo("Closing open port " + selectedPort.html());
+          info("Closing open port " + selectedPort.html());
 
           const response = await closeSerialPort();
 
@@ -863,7 +873,7 @@ export async function initUI(_printer, _scheduler) {
         if (selectedPort.length < 1) {
           me.removeClass("active");
         } else {
-          loginfo("Opening port " + selectedPort.html());
+          info("Opening port " + selectedPort.html());
           me.text("disconnect");
           selectedPort.click(); // trigger connection using active port
         }
@@ -908,7 +918,7 @@ export async function initUI(_printer, _scheduler) {
     if (!this.working) {
       this.working = true;
     } else {
-      loginfo("Getting serial ports...");
+      info("Getting serial ports...");
 
       try {
         const portsList = await getSerialPorts();
@@ -932,6 +942,44 @@ export async function initUI(_printer, _scheduler) {
 
   /// Clear printer queue on server
   $("#clear-btn").on("click", restartLimiter);
+
+  onPosition(async (v) => moveHandler(v));
+  onCodeDone(async (v) => {
+    const dateStr = new Intl.DateTimeFormat("en-US", {
+      hour: "numeric",
+      minute: "numeric",
+      second: "numeric",
+      hour12: false,
+    }).format(new Date(Date.now()));
+
+    let msg;
+    if (v.queued === 0) {
+      msg = `done: no code running [${dateStr}]`;
+    } else {
+      msg = `done: other code blocks in queue: ${v.queued} [${dateStr}]`;
+    }
+    document.getElementById("working-tab").innerHTML = msg;
+    blinkElem($("#working-tab"));
+    //loginfo(`done: code blocks running: ${v.queued}`);
+  });
+  onCodeQueued(async (v) => {
+    const dateStr = new Intl.DateTimeFormat("en-US", {
+      hour: "numeric",
+      minute: "numeric",
+      second: "numeric",
+      hour12: false,
+    }).format(new Date(Date.now()));
+
+    document.getElementById(
+      "working-tab"
+    ).innerHTML = `queued: code block running (queued: ${v.queued}) [${dateStr}]`;
+    //loginfo(`queued: code blocks running: ${v.queued}`);
+  });
+
+  // With the live server, this just blinks constantly...
+  // liveprintercomms.onOk(async () => {
+  //     blinkElem($("#working-tab"));
+  // });
 
   updatePrinterState(true);
 
@@ -982,7 +1030,7 @@ export async function handleGCodeResponse(result) {
         await okEvent(rr);
       } else {
         debug("unhandled gcode response: " + rr);
-        loginfo(`Unexpected printer response:\n${rr}`);
+        info(`Unexpected printer response:\n${rr}`);
         await otherEvent(rr);
         handled = false;
       }
