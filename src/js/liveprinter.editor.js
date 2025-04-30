@@ -9,13 +9,14 @@
  */
 import $  from "jquery";
 import * as gridlib from "gridlib";
-import { debug } from "./logging-utils.js";
+import { debug, doError } from "./logging-utils.js";
 import { buildEvaluateFunction, evalScope } from "./evaluate.mjs";
 import { cleanGCode, Logger } from "liveprinter-utils";
 import { downloadFile, blinkElem, clearError } from "./liveprinter.ui";
 import { makeVisualiser } from "vizlib";
 import { transpile } from "lp-language";
 import { schedule } from "./liveprinter.limiter.js";
+import { asyncFunctionsInAPIRegex } from "./constants/AsyncFunctionsConstants.js";
 const commentRegex = /\/\*[\s\S]*?\*\/|([^\\:]|^)\/\/.*$/gm; // https://stackoverflow.com/questions/5989315/regex-for-match-replacing-javascript-comments-both-multiline-and-inline/15123777#15123777
 
 /////-----------------------------------------------------------
@@ -192,6 +193,9 @@ function storageAvailable(type) {
   }
 }
 
+const bittyRegEx = /\b(global|new|if|else|do|while|switch|for|of|continue|break|return|typeof|function|var|const|let|\.length)(?=[^\w])/;
+
+
 /**
  * Initialise editors and events, etc.
  * @returns {PromiseFulfilledResult}
@@ -199,8 +203,8 @@ function storageAvailable(type) {
 export async function initEditors(lp) {
   const jsrules = {
     comments: /(\/\/.*)/g,
-    keywords:
-      /\b(global|new|if|else|do|while|switch|for|of|continue|break|return|typeof|function|var|const|let|\.length)(?=[^\w])/g,
+    keywords: bittyRegEx,
+    lp: asyncFunctionsInAPIRegex,
     numbers: /\b(\d+)/g,
     strings: /(".*?"|'.*?'|\`.*?\`)/g,
   };

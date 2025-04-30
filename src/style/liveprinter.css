@@ -312,7 +312,11 @@ BITTY
   color: #7b7a7a;
   font-style: italic;
 }
-
+/* syntax coloring rules */
+.bitty-lp {
+    font-weight: bold;
+    color: rgb(93, 98, 123);
+  }
 /* 
  * fancy pseudo-selector to not color numbers when they are inside
  * coments or strings
