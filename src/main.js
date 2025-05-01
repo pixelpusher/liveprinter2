@@ -136,6 +136,8 @@ async function main() {
   // set up global module and function references
   evalScope({ lp, gridlib, visualiser, log: Logger.info }, utils);
 
+  visualiser.setViewY(1/6);
+
   const b1 = bitty.create({
     flashColor: "black",
     flashTime: 100,
