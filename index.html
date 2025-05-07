@@ -16,7 +16,7 @@
         width: 98%;
         height: 100vh;
         background: transparent;
-        opacity: 0.5;
+        opacity: 0.8;
         color:#fff;
         font-family: "Roboto Mono", monospace;
         font-size: 12px;
@@ -31,22 +31,22 @@
         content: counter(line);
         counter-increment: line;
         position: absolute;
-        right: calc(100% + 16px);
-        opacity: 0.5;
+        right: calc(100% + 4em);
+        opacity: 0.8;
       }
 
       ::selection {
-        background: #444;
+        background: #363636;
         color: white;
       }
 
       /* syntax coloring rules */
       .bitty-keywords {
         font-weight: bold;
-        color: rgb(105, 105, 1);
+        color: rgb(228, 228, 140);
       }
       .bitty-strings {
-        color: #c356be;
+        color: #ea90e5;
         font-style: italic;
       }
       .bitty-comments {
@@ -63,12 +63,12 @@
       }
 
       .bitty-active {
-        background: #662;
+        background: rgb(59, 59, 19);
         /* opacity: 0.2; */
       }
 
       p {
-        color: #662;
+        color: rgb(34, 54, 102);
         font-size: smaller;
       }
     </style>

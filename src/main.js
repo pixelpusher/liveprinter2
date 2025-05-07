@@ -13,7 +13,7 @@ import { transpile } from "lp-language";
 import * as gridlib from "gridlib";
 import * as Tone from "tone";
 import { Logger } from "liveprinter-utils";
-import { initialCode, ual_9_6_24, loops } from "./initialcode";
+import { initialCode, ual_9_6_24, loops, shapesmix } from "./initialcode";
 import { evalScope, evaluate } from "./evaluate.mjs";
 import { playNotes } from "./sound";
 
@@ -134,14 +134,14 @@ async function main() {
   lp.addPrintListener(eventsListener);
 
   // set up global module and function references
-  evalScope({ lp, gridlib, visualiser, log: Logger.info }, utils);
+  evalScope({ lp, visualiser, log: Logger.info }, utils, gridlib);
 
   visualiser.setViewY(1/6);
 
   const b1 = bitty.create({
     flashColor: "black",
     flashTime: 100,
-    value: loops,
+    value: ual_9_6_24,
     el: document.querySelector(".one"),
     rules: jsrules,
   });
@@ -150,22 +150,22 @@ async function main() {
     // console.log( 'editor 1:', txt )
     const results = await evaluate(txt, transpile);
     Logger.info(`Evaluated code: ${JSON.stringify(results.code,null,2)}`);
-    b2.el.innerHTML = JSON.stringify(results.code,null,2);
+    //b2.el.innerHTML = JSON.stringify(results.code,null,2);
     // document.getElementById('output').innerHTML=`Evaluated code: ${JSON.stringify(results)}`;
   });
 
   const b2 = bitty.create({
     flashColor: "black",
     flashTime: 100,
-    value: "code2",
+    value: shapesmix,
     el: document.querySelector(".two"),
     rules: jsrules,
   });
 
-  // b2.subscribe( 'run', txt => {
-  //   console.log( 'editor 2:', txt )
-  //   eval( txt )
-  // })
+  b2.subscribe( 'run', async txt => {
+    // console.log( 'editor 2:', txt );
+    const results = await evaluate(txt, transpile);
+  })
 
   /**
    * CodeMirrors
