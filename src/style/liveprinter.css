@@ -100,7 +100,8 @@
 }
 
 body {
-  background: rgb(67, 9, 25);
+  /* background: rgb(67, 9, 25); */
+  background: transparent;
   margin: 0;
 }
 
@@ -144,11 +145,14 @@ td {
 #printer-info {
   padding-top: 0.825em;
   background-color: rgb(67, 9, 25);
+  background-blend-mode: lighten;
   border-bottom: 3px solid gray;
 }
 
 #printer {
-  background-color: rgb(82, 82, 82);
+  /* background-color: rgb(82, 82, 82); */
+  background: transparent;
+  background-blend-mode: lighten;
   height: 100%;
   padding: 0.875em;
 }
@@ -168,13 +172,17 @@ td {
 }
 
 #inbox {
-  background: #0c1a30;
+  /* background: #0c1a30; */
+  background: transparent;
+
   color: #01ffb4;
   height: calc(100% - 8px);
 }
 
 #tab-messages-pane {
-  background-color: rgb(82, 82, 82);
+  /* background-color: rgb(82, 82, 82); */
+  background: transparent;
+
 }
 
 #printer > .row {
@@ -190,7 +198,9 @@ td {
 }
 
 .code-errors {
-  background-color: rgb(67, 9, 25);
+  /* background-color: rgb(67, 9, 25); */
+  background: transparent;
+
   padding: 0.4em;
   color: lightgray;
   border-left: 0;
@@ -201,8 +211,9 @@ td {
 
 #info,
 #info-tab.active {
-  background-color: rgb(82, 82, 82);
+  /* background-color: rgb(82, 82, 82); */
   border-bottom-color: transparent;
+  background: transparent;
 }
 
 #info {
@@ -244,6 +255,7 @@ td {
 #code-editor-area,
 #global-code-editor-area {
   color: darkslategrey;
+  background: transparent;
 }
 
 #code-editor-area:first-child,
@@ -274,7 +286,9 @@ BITTY
   /* position: absolute; */
   width: 98%;
   height: 80vh;
-  background: rgb(0, 0, 0);
+  /* background: rgb(0, 0, 0); */
+  background: transparent;
+
   color: #efeded;
   font-family: "Roboto Mono", monospace;
   font-size: 12px;
@@ -292,6 +306,15 @@ BITTY
   position: absolute;
   right: calc(100% + 2rem);
   opacity: 0.8;
+}
+
+#visualiser {
+    position: fixed;
+    top:0;
+    left:0;
+    height: 100%;
+    width: 100%; 
+    z-index: -1;
 }
 
 ::selection {
@@ -347,7 +370,9 @@ kbd {
 }
 
 .bg-colorful1 {
-  background-color: rgb(123, 15, 46);
+  /* background-color: rgb(123, 15, 46); */
+  background: transparent;
+
 }
 
 .instructions-panel,
@@ -643,7 +668,9 @@ a.graylink,
 }
 
 .alert-primary {
-  background-color: #181818;
+  /* background-color: #181818; */
+  background: transparent;
+
   color: lightblue;
 }
 

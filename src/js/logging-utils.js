@@ -1,5 +1,6 @@
 //LOGGIN
 
+import { Logger } from "liveprinter-utils";
 
 //------------------------------------------------
 // feedback to the GUI or logger

@@ -16,10 +16,10 @@
     "liveprinter-core": "github:pixelpusher/liveprinter-core",
     "liveprinter-utils": "github:pixelpusher/lp-utils",
     "lp-language": "github:pixelpusher/lp-language",
-    "vite": "^6.0.5",
+    "vite": "^6.3.5",
     "vizlib": "github:pixelpusher/vizlib"
   },
   "dependencies": {
-    "tone": "^15.0.4"
+    "tone": "^15.1.22"
   }
 }

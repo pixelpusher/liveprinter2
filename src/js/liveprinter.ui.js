@@ -38,6 +38,7 @@ import {
   debug,
   setDoError,
   setLogInfo,
+  doError,
   logError,
   setLogCommands,
   setLogPrinterState,
@@ -266,6 +267,10 @@ export const commandsHandler = {
 export const moveHandler = (response) => {
   let result = true;
   try {
+    // handle Prusa vs. regular here -- look for 'steps' in payload if 'steps' key exists
+    // printer.x = response.payload.steps ? parseFloat(response.payload.pos.x/response.payload.steps.x) : parseFloat(response.payload.pos.x);
+    // printer.y = response.payload.steps ? parseFloat(response.payload.pos.y/response.payload.steps.y) : parseFloat(response.payload.pos.y);
+    // printer.z = response.payload.steps ? parseFloat(response.payload.pos.z/response.payload.steps.z) : parseFloat(response.payload.pos.z);
     printer.x = parseFloat(response.payload.pos.x);
     printer.y = parseFloat(response.payload.pos.y);
     printer.z = parseFloat(response.payload.pos.z);
@@ -813,6 +818,10 @@ export async function initUI(_printer, _scheduler) {
   setLogCommands(commandsHandler.log);
   setLogPrinterState(printerStateHandler);
 
+  //TEST -- remove this
+  console.error(MarlinLineParserResultPosition.parse("X:10.00 Y:10.00 Z:30.00 E:0.00 Count X:1040 Y:1000 Z:12000"));
+
+
   if (!_printer) {
     logerror("FATAL error: no liveprinter object in gui init()!");
     return;
@@ -1013,28 +1022,30 @@ export async function handleGCodeResponse(result) {
       const positionResult = MarlinLineParserResultPosition.parse(rr);
       const tempResult = MarlinLineParserResultTemperature.parse(rr);
 
-      if (tempResult) {
+      if (tempResult != null) {
         tempHandler(tempResult);
         debug("temperature event handled");
         handled = true;
       }
-
-      if (positionResult) {
+      if (positionResult != null) {
         moveHandler(positionResult);
 
         // move/position update handled
         await positionEvent(positionResult);
+        handled = true;
       }
 
-      if (!tempResult && !positionResult && rr.match(/ok/i)) {
-        await okEvent(rr);
-      } else {
-        debug("unhandled gcode response: " + rr);
-        info(`Unexpected printer response:\n${rr}`);
-        await otherEvent(rr);
-        handled = false;
-      }
+      if (!handled) {
+        if (rr.match(/ok/i)) {
+          await okEvent(rr);
+        } else {
+          debug("unhandled gcode response: " + rr);
+          info(`Unexpected printer response:\n${rr}`);
+          await otherEvent(rr);
+        }
+      }      
     }
+    
   }
 
   return handled;

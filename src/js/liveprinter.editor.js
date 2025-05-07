@@ -11,8 +11,8 @@ import $  from "jquery";
 import * as gridlib from "gridlib";
 import { debug, doError } from "./logging-utils.js";
 import { buildEvaluateFunction, evalScope } from "./evaluate.mjs";
-import { cleanGCode, Logger } from "liveprinter-utils";
-import { downloadFile, blinkElem, clearError } from "./liveprinter.ui";
+import { cleanGCode, Logger, repeat, countto, numrange } from "liveprinter-utils";
+import { downloadFile, blinkElem, clearError, updateGUI } from "./liveprinter.ui";
 import { makeVisualiser } from "vizlib";
 import { transpile } from "lp-language";
 import { schedule } from "./liveprinter.limiter.js";
@@ -276,7 +276,7 @@ export async function initEditors(lp) {
   // set up global module and function references
   //evalScope({ lp, gridlib, visualiser, Logger, grammarlib });
 
-  evalScope({ lp, gridlib, visualiser, Logger });
+  evalScope({ log: Logger.info }, visualiser, gridlib, repeat, countto, numrange, updateGUI);
 
 
   const CodeEditor = bitty.create({

@@ -3,18 +3,11 @@ import { repeat, numrange, countto, Scheduler } from "liveprinter-utils";
 import { LivePrinter } from "liveprinter-core";
 
 import {
-  moveHandler,
   taskListenerUI,
   initUI,
-  blinkElem,
   sendAndHandleGCode
 } from "./liveprinter.ui.js";
 
-import {
-    onCodeDone,
-    onCodeQueued,
-    onPosition
-} from './liveprinter.listeners.js';
 
 import {
   doError

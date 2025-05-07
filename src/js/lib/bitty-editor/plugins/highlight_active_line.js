@@ -40,8 +40,6 @@ const __plugin = {
       const sel  = window.getSelection()
       let node = sel.focusNode
       if( node.localName !== 'div' ) node = node.parentElement
-
-      console.log( node, prev )
       if( node !== prev && node !== plugin.bitty.el ) {
         plugin.__active = node
       }else if( node === plugin.bitty.el ) {
