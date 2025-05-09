@@ -12,11 +12,12 @@ import * as gridlib from "gridlib";
 import { debug, doError } from "./logging-utils.js";
 import { buildEvaluateFunction, evalScope } from "./evaluate.mjs";
 import { cleanGCode, Logger, repeat, countto, numrange } from "liveprinter-utils";
-import { downloadFile, blinkElem, clearError, updateGUI } from "./liveprinter.ui";
+import { downloadFile, blinkElem, clearError, updateGUI, info } from "./liveprinter.ui";
 import { makeVisualiser } from "vizlib";
 import { transpile } from "lp-language";
 import { schedule } from "./liveprinter.limiter.js";
 import { asyncFunctionsInAPIRegex } from "./constants/AsyncFunctionsConstants.js";
+import { shapesmix } from "./initialcode.js";
 const commentRegex = /\/\*[\s\S]*?\*\/|([^\\:]|^)\/\/.*$/gm; // https://stackoverflow.com/questions/5989315/regex-for-match-replacing-javascript-comments-both-multiline-and-inline/15123777#15123777
 
 /////-----------------------------------------------------------
@@ -111,6 +112,8 @@ function recordGCode(editor, gcode) {
  * @returns {Boolean} success
  */
 async function runCode(code, immediate=false) {
+  let result = false;
+
   // if printer isn't connected, we shouldn't run!
   const printerConnected = $("#header").hasClass("blinkgreen");
   if (!printerConnected) {
@@ -146,15 +149,15 @@ async function runCode(code, immediate=false) {
     );
 
     if (immediate) {
-      await resultFunction();
+      result = resultFunction();
     } else {
-      await schedule(()=>resultFunction());
+      result = schedule(()=>resultFunction());
     }
 
     // blink the form
     blinkElem($("form"));
   }
-  return true;
+  return result;
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////
@@ -276,7 +279,7 @@ export async function initEditors(lp) {
   // set up global module and function references
   //evalScope({ lp, gridlib, visualiser, Logger, grammarlib });
 
-  evalScope({ log: Logger.info }, visualiser, gridlib, repeat, countto, numrange, updateGUI);
+  evalScope({ log: Logger.info, updateGUI, repeat, countto, numrange, info }, visualiser, gridlib);
 
 
   const CodeEditor = bitty.create({
@@ -288,6 +291,16 @@ export async function initEditors(lp) {
   });
   CodeEditor.name= 'CodeEditor';
 
+  const CodeEditor2 = bitty.create({
+    flashColor: "black",
+    flashTime: 100,
+    value: localStorage.getItem('CodeEditor2') || shapesmix,
+    el: document.querySelector("#code-editor-2-area"),
+    rules: jsrules,
+  });
+  CodeEditor2.name= 'CodeEditor2';
+
+
   const HistoryCodeEditor = bitty.create({
     flashColor: "black",
     flashTime: 100,
@@ -297,16 +310,16 @@ export async function initEditors(lp) {
   });
   HistoryCodeEditor.name = 'HistoryCodeEditor';
 
-  const editors = [CodeEditor, HistoryCodeEditor];
+  const editors = [CodeEditor, CodeEditor2, HistoryCodeEditor];
 
   // map code evaluation
   editors.map((v) => {
     v.subscribe("run", runCode);
-    v.subscribe('keyup',  (e)=>{
+    v.subscribe('keyup', async (e)=>{
       debug(`${v.name} key up: ${e.target.innerText}`);
       localStorage.setItem(v.name, e.target.innerText);
     });
-    v.keyManager.register('shift+enter',(e)=>{
+    v.keyManager.register('shift+ctrl+enter', async (e)=>{
       debug(`immediate mode code! ${e.target.innerText}`);
       runCode(e.target.innerText, true);
     });

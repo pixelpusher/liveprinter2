@@ -110,7 +110,7 @@ export function getLimiter() {
  */
 export async function scheduleFunction(...args) {
   //logInfo(`scheduling Func: ${JSON.stringify(args)}`);
-  return await limiter.schedule(...args);
+  return limiter.schedule(...args);
 }
 
 /**
@@ -122,7 +122,7 @@ export async function scheduleFunction(...args) {
 export async function schedule(...args) {
   //Logger.info(`scheduling: ${args}`);
   //Logger.info(`scheduling type: ${typeof args}`);
-  return await limiter.schedule(
+  return limiter.schedule(
     { priority: 1, weight: 1, id: codeIndex++ },
     ...args
   );

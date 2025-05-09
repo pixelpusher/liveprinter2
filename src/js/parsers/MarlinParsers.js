@@ -14,7 +14,7 @@ export class MarlinLineParserResultPosition {
     const lineSplit = line.split("Count");
     const firstPart = lineSplit[0];
     const secondPart = lineSplit[1];
-    const isPrusa = secondPart != null;
+    const hasSteps = secondPart != null;
 
     const r = firstPart.match(overallPattern);
 
@@ -26,19 +26,21 @@ export class MarlinLineParserResultPosition {
       steps: null, // in Prusa firmware
     };
 
-    if (isPrusa) {
+    if (hasSteps) {
       payload.steps = {};
       const stepsPart = secondPart.match(overallPattern);
-      const stepsParams = stepsPart[0].match(axisValuePattern);
+      if (stepsPart) {
+        const stepsParams = stepsPart[0].match(axisValuePattern);
 
-      for (let param of stepsParams) {
-        const nv = param.match(valuesPattern);
-        if (nv) {
-          const axis = nv[1].toLowerCase();
-          const pos = nv[2];
-          //   const digits = decimalPlaces(pos);
-          //   payload.steps[axis] = Number(pos).toFixed(digits);
-          payload.steps[axis] = Number(pos);
+        for (let param of stepsParams) {
+          const nv = param.match(valuesPattern);
+          if (nv) {
+            const axis = nv[1].toLowerCase();
+            const pos = nv[2];
+            //   const digits = decimalPlaces(pos);
+            //   payload.steps[axis] = Number(pos).toFixed(digits);
+            payload.steps[axis] = Number(pos);
+          }
         }
       }
     }
