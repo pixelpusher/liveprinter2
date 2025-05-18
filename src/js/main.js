@@ -17,6 +17,8 @@ import { initEditors } from "./liveprinter.editor";
 import { Logger } from "liveprinter-utils";
 import $ from "jquery";
 
+import { initSound } from './sound.js';
+
 globalThis.$ = globalThis.jquery = $;
 
 //require('./svg/SVGReader'); // svg util class
@@ -54,17 +56,12 @@ globalThis.$ = globalThis.jquery = $;
     };
   }
 
-  // start task scheduler!
-  const scheduler = new Scheduler();
-
-  // register GUI handler for scheduled tasks events
-  scheduler.addEventsListener(taskListenerUI);
-
   const lp = new LivePrinter();
   globalThis.lp = lp;
 
   await initEditors(lp); // create editors and setup live editing functions
-  await initUI(lp, scheduler); // start server communications and setup UI
+  await initUI(lp); // start server communications and setup UI
+  await initSound(lp);
 
   /// attach listeners
 
@@ -79,53 +76,7 @@ globalThis.$ = globalThis.jquery = $;
   //     { gcodeEvent: async (gcode) => editors.recordGCode(editors.GCodeEditor, gcode) }
   // );
 
-  
-  ///----------------------------------------------------------------------------
-  ///--------Start running things------------------------------------------------
-  ///----------------------------------------------------------------------------
 
-  ////
-  /// Livecoding tasks API -- sort of floating here, for now
-  ///
-  /**
-   * Add a cancellable task to the scheduler and also the GUI
-   * @param {Any} task either scheduled task object or name of task plus a function for next arg
-   * @param {Function} func Async function, if name was passed as 1st arg
-   * @memberOf LivePrinter
-   */
-  function addTask(scheduler, task, interval, func) {
-    if (func === undefined) {
-      //try remove first
-      scheduler.removeEventByName(task.name);
-      scheduler.scheduleEvent(task);
-    } else {
-      if (typeof task === "string" && func === undefined)
-        throw new Error("AddTask: no function passed!");
-      //try remove first
-      scheduler.removeEventByName(task);
-      const t = new Task();
-      t.name = task;
-      t.delay = interval;
-      t.run = func;
-      scheduler.scheduleEvent(t);
-    }
-  }
-  globalThis.addTask = addTask;
-
-  function getTask(scheduler, name) {
-    return scheduler.getEventByName(name);
-  }
-
-  globalThis.getTask = getTask;
-
-  function removeTask(scheduler, name) {
-    return scheduler.removeEventByName(name);
-  }
-
-  globalThis.removeTask = removeTask;
-  ///
-  /// --------- End livecoding tasks API -------------------------
-  ///
 })().catch((err) => {
   console.error(err);
 });

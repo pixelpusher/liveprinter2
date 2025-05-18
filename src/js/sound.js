@@ -1,4 +1,5 @@
 import { PulseOscillator, MonoSynth, start } from "tone";
+import { Logger } from "liveprinter-utils";
 
   const synthX = new MonoSynth({
     oscillator: {
