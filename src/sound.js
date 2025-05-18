@@ -1,4 +1,4 @@
-import { PulseOscillator, MonoSynth } from "tone";
+import { PulseOscillator, MonoSynth, start } from "tone";
 
   const synthX = new MonoSynth({
     oscillator: {
@@ -39,6 +39,57 @@ export function playNotes(noteFreqs, duration) {
   synthZ.triggerAttack(noteFreqs.z, `+${duration / 1000}`, 0.2);
 }
 
+const eventsListener = {
+    printEvent: async ({
+      type,
+      newPosition,
+      oldPosition,
+      speed,
+      moveTime,
+      totalMoveTime,
+      layerHeight,
+      length,
+    }) => {
+      Logger.debug(
+        `TEST PRINT EVENT: ${type},
+          old: ${JSON.stringify(oldPosition)},
+          new: ${JSON.stringify(newPosition)},
+          speed: ${speed},
+          moveTime: ${moveTime},
+          totalMoveTime: ${totalMoveTime},
+          layerHeight: ${layerHeight},
+          length: ${length}`
+      );
+
+      if (!newPosition || !oldPosition) return;
+
+      const speedPerAxisMs = {
+        x: (newPosition.x - oldPosition.x) / moveTime,
+        y: (newPosition.y - oldPosition.y) / moveTime,
+        z: (newPosition.z - oldPosition.z) / moveTime,
+      };
+      const speedScale = lp.speedScale();
+      const noteFreqs = {
+        x: 1000 * Math.abs(speedPerAxisMs.x) * speedScale.x,
+        y: 1000 * Math.abs(speedPerAxisMs.y) * speedScale.y,
+        z: 1000 * Math.abs(speedPerAxisMs.z) * speedScale.z,
+      };
+
+      playNotes(noteFreqs, moveTime);
+
+      return;
+    }
+  };
+
+export async function initSound(printer) { 
+   // set up print events feedback
+  printer.addPrintListener(eventsListener); 
+  return start();
+}
+
+export function stopSound(printer) {
+  printer.removePrintListener(eventsListener);
+}
 
 // const oscXYZ = {
 //   x: new PulseOscillator(0, 0.15).toDestination(),

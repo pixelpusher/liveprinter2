@@ -11,11 +11,13 @@ import { LivePrinter } from "liveprinter-core";
 import { makeVisualiser } from "vizlib";
 import { transpile } from "lp-language";
 import * as gridlib from "gridlib";
-import * as Tone from "tone";
 import { Logger } from "liveprinter-utils";
 import { initialCode, ual_9_6_24, loops, shapesmix } from "./initialcode";
 import { evalScope, evaluate } from "./evaluate.mjs";
-import { playNotes } from "./sound";
+import { initSound } from "./sound";
+import './js/lib/bitty-editor/bitty.min.js';
+import './js/lib/bitty-editor/plugins/highlight_active_line.js';
+
 
 import * as utils from "liveprinter-utils";
 
@@ -40,10 +42,7 @@ Logger.level = Logger.LOG_LEVEL.error;
 
 //attach a click listener to a play button
 document.querySelector("#start-btn")?.addEventListener("click", async () => {
-  await Tone.start();
-  Logger.info("audio is ready");
-
-  main();
+  await main();
 });
 
 
@@ -78,50 +77,7 @@ const edit2 = document.getElementById("editor-2");
  */
 async function main() {
 
-  
   const lp = new LivePrinter();
-
-  const eventsListener = {
-    printEvent: async ({
-      type,
-      newPosition,
-      oldPosition,
-      speed,
-      moveTime,
-      totalMoveTime,
-      layerHeight,
-      length,
-    }) => {
-      Logger.debug(
-        `TEST PRINT EVENT: ${type},
-          old: ${JSON.stringify(oldPosition)},
-          new: ${JSON.stringify(newPosition)},
-          speed: ${speed},
-          moveTime: ${moveTime},
-          totalMoveTime: ${totalMoveTime},
-          layerHeight: ${layerHeight},
-          length: ${length}`
-      );
-
-      if (!newPosition || !oldPosition) return;
-
-      const speedPerAxisMs = {
-        x: (newPosition.x - oldPosition.x) / moveTime,
-        y: (newPosition.y - oldPosition.y) / moveTime,
-        z: (newPosition.z - oldPosition.z) / moveTime,
-      };
-      const speedScale = lp.speedScale();
-      const noteFreqs = {
-        x: 1000 * Math.abs(speedPerAxisMs.x) * speedScale.x,
-        y: 1000 * Math.abs(speedPerAxisMs.y) * speedScale.y,
-        z: 1000 * Math.abs(speedPerAxisMs.z) * speedScale.z,
-      };
-
-      playNotes(noteFreqs, moveTime);
-
-      return;
-    },
-  };
 
   // do the main thing we came here for
   const visualiser = makeVisualiser(lp, "preview", {
@@ -130,11 +86,10 @@ async function main() {
     debug: false,
   });
 
-  // set up print events feedback
-  lp.addPrintListener(eventsListener);
+  await initSound(lp);
 
   // set up global module and function references
-  evalScope({ lp, visualiser, log: Logger.info }, utils, gridlib);
+  evalScope({ lp, log: Logger.info }, visualiser, utils, gridlib);
 
   visualiser.setViewY(1/6);
 
@@ -152,6 +107,7 @@ async function main() {
     Logger.info(`Evaluated code: ${JSON.stringify(results.code,null,2)}`);
     //b2.el.innerHTML = JSON.stringify(results.code,null,2);
     // document.getElementById('output').innerHTML=`Evaluated code: ${JSON.stringify(results)}`;
+    return results;
   });
 
   const b2 = bitty.create({
@@ -162,10 +118,7 @@ async function main() {
     rules: jsrules,
   });
 
-  b2.subscribe( 'run', async txt => {
-    // console.log( 'editor 2:', txt );
-    const results = await evaluate(txt, transpile);
-  })
+  b2.subscribe( 'run', async txt => evaluate(txt, transpile));
 
   /**
    * CodeMirrors
