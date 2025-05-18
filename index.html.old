@@ -4,19 +4,14 @@
     <meta charset="UTF-8" />
     <!-- <link rel="icon" type="image/svg+xml" href="/vite.svg" /> -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>LP Test</title>
-    <script src="./node_modules/bitty-editor/bitty.min.js" defer></script>
-    <script
-      src="./node_modules/bitty-editor/plugins/highlight_active_line.js"
-      defer
-    ></script>
+    <title>LivePrinter2 Simulator</title>
     <style>
       .bitty-editor {
         position: absolute;
         width: 98%;
         height: 100vh;
         background: transparent;
-        opacity: 0.5;
+        opacity: 0.8;
         color:#fff;
         font-family: "Roboto Mono", monospace;
         font-size: 12px;
@@ -31,22 +26,22 @@
         content: counter(line);
         counter-increment: line;
         position: absolute;
-        right: calc(100% + 16px);
-        opacity: 0.5;
+        right: calc(100% + 4em);
+        opacity: 0.8;
       }
 
       ::selection {
-        background: #444;
+        background: #363636;
         color: white;
       }
 
       /* syntax coloring rules */
       .bitty-keywords {
         font-weight: bold;
-        color: rgb(105, 105, 1);
+        color: rgb(228, 228, 140);
       }
       .bitty-strings {
-        color: #c356be;
+        color: #ea90e5;
         font-style: italic;
       }
       .bitty-comments {
@@ -63,15 +58,17 @@
       }
 
       .bitty-active {
-        background: #662;
+        background: rgb(59, 59, 19);
         /* opacity: 0.2; */
       }
 
       p {
-        color: #662;
+        color: rgb(34, 54, 102);
         font-size: smaller;
       }
     </style>
+    <script type="module" crossorigin src="/assets/index-CbuSh-kS.js"></script>
+    <link rel="stylesheet" crossorigin href="/assets/index-C5xLnkAV.css">
   </head>
   <body>
     <div id="controls">
@@ -83,9 +80,8 @@
       <p>TRANSPILED: <span id="output"></span></p>
     </div>
     <div id="app">
-      <div id="preview"></div>
       <!-- <button id="run-btn">RUN</button> -->
-
+      <div id="preview"></div>
       <div id="editor-container">
         <div
           class="bitty-editor one"
