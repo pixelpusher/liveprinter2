@@ -1,6 +1,8 @@
 import { PulseOscillator, MonoSynth, start } from "tone";
 import { Logger } from "liveprinter-utils";
 
+let started = false;
+
   const synthX = new MonoSynth({
     oscillator: {
         type: "pulse"
@@ -84,6 +86,8 @@ const eventsListener = {
 
 export async function initSound(printer) { 
    // set up print events feedback
+  if (started) return;
+  Logger.info('SOUND STARTED');
   printer.addPrintListener(eventsListener); 
   return start();
 }

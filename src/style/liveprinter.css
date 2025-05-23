@@ -100,8 +100,8 @@
 }
 
 body {
-  /* background: rgb(67, 9, 25); */
-  background: transparent;
+  background: rgb(1, 2, 3);
+  /* background: transparent; */
   margin: 0;
 }
 
@@ -182,7 +182,6 @@ td {
 #tab-messages-pane {
   /* background-color: rgb(82, 82, 82); */
   background: transparent;
-
 }
 
 #printer > .row {
@@ -275,6 +274,7 @@ td {
 
 /* textarea that CodeMirror replaces on load */
 #code-editor,
+#code-editor-2,
 #global-code-editor {
   width: 100%;
 }
@@ -283,15 +283,15 @@ td {
 BITTY
 */
 .bitty-editor {
+  font-family: "NovaMono", monospace;
   /* position: absolute; */
   width: 98%;
   height: 80vh;
   /* background: rgb(0, 0, 0); */
   background: transparent;
-
   color: #efeded;
-  font-family: "Roboto Mono", monospace;
-  font-size: 12px;
+  font-size: 14px;
+  font-weight: 700;
   outline: none;
   overflow-y: scroll;
   white-space: pre-wrap;
@@ -309,12 +309,12 @@ BITTY
 }
 
 #visualiser {
-    position: fixed;
-    top:0;
-    left:0;
-    height: 100%;
-    width: 100%; 
-    z-index: -1;
+  position: fixed;
+  top: 6rem;
+  left: 0;
+  height: 100%;
+  width: 75%;
+  z-index: -1;
 }
 
 ::selection {
@@ -325,21 +325,32 @@ BITTY
 /* syntax coloring rules */
 .bitty-keywords {
   font-weight: bold;
-  color: rgb(111, 3, 66);
+  color: rgb(22, 255, 111);
 }
 .bitty-strings {
   color: #c594c3;
   font-style: italic;
 }
 .bitty-comments {
-  color: #7b7a7a;
-  font-style: italic;
+  display: block;
+  /* max-width: 80%; */
+  margin: 0.2rem auto;
+  font-family: "ShareTechMono", monospace;
+  color: #4fc3c7;
+  /* font-style: italic; */
+  
+  font-size: 125%;
+  font-weight: 800;
 }
+/* .bitty-comments::after {
+  display: block;
+} */
+
 /* syntax coloring rules */
 .bitty-lp {
-    font-weight: bold;
-    color: rgb(93, 98, 123);
-  }
+  font-weight: bold;
+  color: rgb(244, 199, 78);
+}
 /* 
  * fancy pseudo-selector to not color numbers when they are inside
  * coments or strings
@@ -372,7 +383,6 @@ kbd {
 .bg-colorful1 {
   /* background-color: rgb(123, 15, 46); */
   background: transparent;
-
 }
 
 .instructions-panel,
@@ -570,6 +580,7 @@ a.graylink,
 .nav-tabs .nav-link {
   border-radius: 0;
   color: lightgray;
+  font-size: 75%;
 }
 
 .form-control-sm,
@@ -714,4 +725,8 @@ a.graylink,
   padding: 0;
   margin: 0;
   text-decoration: underline;
+}
+
+.hidden {
+  display: none;
 }

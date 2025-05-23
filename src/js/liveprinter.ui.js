@@ -19,6 +19,8 @@
 import { Logger, Scheduler } from "liveprinter-utils";
 import $ from "jquery";
 
+import { initSound } from "./sound.js";
+
 import {
   MarlinLineParserResultPosition,
   MarlinLineParserResultTemperature,
@@ -332,6 +334,9 @@ export const portsListHandler = function (event) {
       e.preventDefault();
       const me = $(this);
       console.log(`serial port btn clicked ${me}`);
+
+      info('INIT SOUND');
+      await initSound(printer);
 
       info("opening serial port " + me.html());
       const baudRate = $("#baudrates-list .active").data("rate");
@@ -814,8 +819,11 @@ export async function initUI(_printer, _scheduler) {
   setLogPrinterState(printerStateHandler);
 
   //TEST -- remove this
-  console.error(MarlinLineParserResultPosition.parse("X:10.00 Y:10.00 Z:30.00 E:0.00 Count X:1040 Y:1000 Z:12000"));
-
+  console.error(
+    MarlinLineParserResultPosition.parse(
+      "X:10.00 Y:10.00 Z:30.00 E:0.00 Count X:1040 Y:1000 Z:12000"
+    )
+  );
 
   if (!_printer) {
     logerror("FATAL error: no liveprinter object in gui init()!");
@@ -838,6 +846,7 @@ export async function initUI(_printer, _scheduler) {
 
   $("#connect-btn").on("click", async function (e) {
     e.preventDefault();
+    
     info("OPENING SERIAL PORT");
 
     const notCalledFromCode = !(
@@ -1038,9 +1047,8 @@ export async function handleGCodeResponse(result) {
           info(`Unexpected printer response:\n${rr}`);
           await otherEvent(rr);
         }
-      }      
+      }
     }
-    
   }
 
   return handled;

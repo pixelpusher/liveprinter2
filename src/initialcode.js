@@ -1,4 +1,5 @@
-export const initialCode = `# start | temp 220 | bed 68 | bpm 120 | interval '1b' | m2s 'C5' 
+export const initialCode = 
+`# start | temp 220 | bed 68 | bpm 120 | interval '1b' | m2s 'C5' 
 
 # mov2 x:lp.cx y:lp.cy z:0.2 speed:80
 
@@ -95,13 +96,6 @@ lp.mainloop(async () => {
       console.error(\`draw to error: \${err}\`);
     }
   }
-    else {
-    
-    # bail
-
-    return;
-
-    }
 });
  
 log('CHALICE OF NOISE')  
@@ -163,188 +157,98 @@ repeat(64, async ()=> {
 })
 `;
 
-export const shapesmix = `//---------------------------
-// SHAPES MIX
-//---------------------------
+
+export const shapesmix = `
+  
+ // print at 200 for white filament, 215 for multi
+setZoom(0.1) 
+setViewX(0);
+setViewY(0.4);
+  
  
-setZoom(0.5);
-setViewX(0.07);
-setViewY(0.04);
-closeFactor(80);
+# start
  
  
-//notes = ['d4','c4','b3']
-//notes = ['b4','c5','d5'];
-//notes = ['c4','c3','c5','a3','d5','g4','c2','c4','c3','c5','a3','d5','g4','c4','c3','c5','a3','d5','g4','g2','c4','c3','c5','a2','d5','g4']
-//notes = ['c1','c4','c5','c4','g4','a5','a1','c4','c5','a1','a4','a5','a4','b4','c5','c1','b4','b5'];
+# temp 220 | bed 60 | fan 0
  
-const sides = 16;
-const points = sides;
-const circumference = '12b';
-const printer = lp;
-const cx = printer.cx;
-const cy = printer.cy;
-const minz = 0.11;
-const layerThick = 0.13;
-const bpm = 133;
-const note = 'g4';
- 
+# interval '1/4b' // also try 1/16!
  
 // -------------------------------------------------------
 // ---------------GEN6 M-like presets---------------------
 // -------------------------------------------------------
   
 // fast fun tiny with 2 rows, 8 gets medium size and crazy
-global presetG6 = presets.genP6({
-  printer,
+global preset = presets.genP6({
+  printer:lp,
   loop: false,
-  amtx: 0.04,
-  amty: 0.03,
-  minz: 0.12,
+  amtx: 0.08,
+  amty: 0.06,
+  minz: 0.2,
   grids: { cols: 4, rows: 8 },
-  bpm,
-  t: "1/2b",
+  bpm: 125,
+  t: "1b",
   rowNote:'d4',
   colNote: 'd4',
-  beatHeight: "4b",
-  layerThick,
+  beatHeight: "5/2b",
+  layerThick: 0.2,
 });
- 
-// ---------------====START GRID====--------------------
-global it1 = iterator(presetG6);
-// ---------------==================--------------------
- 
-const presetPoly2 = presets.genPoly2({
-  printer,
-  sides,
-  circumference,
-  cx,
-  cy,
-  minz,
-  layerThick,
-  amtx: 0.35,
-  amtr: 0.25,
-  beatHeight: "6b",
-  note,
-  bpm,
-});
- 
-const presetPoly1 = presets.genPoly1({
-  printer,
-  sides,
-  circumference:'24b',
-  cx,
-  cy,
-  minz:0,
-  layerThick,
-  amtx: 0.2,
-  amtr: 0.1,
-  beatHeight: "6b",
-  note,
-  bpm,
-});
- 
-const h = lp.n2mm(note, '4b', bpm);
-const d = points*lp.n2mm(note, '1/4b', bpm);
- 
-const presetGio = presets.makeGiacometti_1({
-  printer,
-  points,
-  layerThick,
-  cx: cx-d*1/2,
-  cy,
-  note,
-  t: "1/4b",
-  bpm,
-  minz: h,
-  beatHeight: "4b",
-});
- 
- 
-global preset = presetPoly2;
- 
-global it2 = iterator(presetPoly2);
-global it3 = iterator(presetPoly1);
-global it4 = iterator(presetGio);
- 
- 
-global currentit = it2;
- 
-// crossfade over X layers
-          
- 
-//******** RUN THE MAIN LOOP************************************
    
  
-let layers = 0;
-let next = currentit.next;
-
-info('moving to pos');
-
-# fan 0 | prime | fan 50 | speed 80 | mov2 next() | unretract | wait 20 | fan 10 | bail false
+// ---------------====START GRID====--------------------
  
-printer.mainloop(async()=>{
- info('loop1');
  
-  const point = next();
+global it = iterator(preset);
  
-  if (point.z >= preset.height) 
-  {
+it.notes = ['c4', 'd5', 'g4','c4', 'd3', 'g4','c4', 'd4', 'g4'];
+ 
+//it.notes = ['c2']
+ 
+// notes = ['d6','e6','f6']
+ 
+ 
+//notes = ['b5','a5','c6','b5','g5'];
+  
+ 
+//******** RUN THE MAIN LOOP************************************
+ 
+# fan 50
+  
+// copy from here
+ 
+# prime | speed 80 | mov2 it.next() | unretract | wait 20 | fan 10
+  
+lp.mainloop(async () => {
+  const next = it.next();
+ 
+  if (next.z <= preset.height) {
+    try {
+      // next note if uncommented
+      # to next | draw 
+      
+    } catch (err) {
+      console.error(\`draw to error vals: \${next}\`);
+      console.error(\`draw to error: \${err}\`);
+    }
+  } else {
+    log ('bail');
+ 
+ 
     # bail
-    
-    info('DONE! -- CLAP CLAP CLAP')  
  
-    return;
-  }
  
-  try 
-  {  
-    # to point | draw
+    log('CHALICE OF NOISE')  
  
-  } catch (err) {
-    console.error(\`draw to error vals: \${point}\`);
-    console.error(\`draw to error: \${err}\`);
-  }
  
-  if (point.i > 0 && point.i % preset.points_per_layer === 0) 
-  {  
-    layers++;
-    console.log('layer:' + layers);
-  }
- 
-// if we hit 10 layers cross fade btw iterators
- 
-  if (layers === 20) 
-  {
-    info('crossfade triggered');
-
-    currentit = it3;
-    currentit.notes = ['g4'];
-
-    preset = presetPoly1;
-
-    const crossFadeFunc = crossfadePoints(preset.points_per_layer*30);
-    next = ()=>crossFadeFunc(it2.next(),it3.next());
-
-  } else if (layers === 40) {
-
-    info('crossfade 2 triggered');
-    const it4 = iterator(preset_gio1);
-    currentit = it4;
-    preset = preset_gio1;
-
-// preset_gio1.points_per_layer = presetPoly2.points_per_layer;
-    const crossFadeFunc = crossfadePoints(preset.points_per_layer*40);
-    next = ()=>crossFadeFunc(it3.next(),it4.next());
   }
 });
  
-
+ 
+  
+// TO HERE
 //////////////////////////////////////////////////////////////////////
 ////////////////////////// END ///////////////////////////////////////
 ////////////////////////// MAIN //////////////////////////////////////
 ////////////////////////// LOOP //////////////////////////////////////
 ////////////////////////// !!!! //////////////////////////////////////
 //////////////////////////////////////////////////////////////////////
- 
- `;
+  `; 

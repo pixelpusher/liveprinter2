@@ -17,8 +17,6 @@ import { initEditors } from "./liveprinter.editor";
 import { Logger } from "liveprinter-utils";
 import $ from "jquery";
 
-import { initSound } from './sound.js';
-
 globalThis.$ = globalThis.jquery = $;
 
 //require('./svg/SVGReader'); // svg util class
@@ -61,7 +59,6 @@ globalThis.$ = globalThis.jquery = $;
 
   await initEditors(lp); // create editors and setup live editing functions
   await initUI(lp); // start server communications and setup UI
-  await initSound(lp);
 
   /// attach listeners
 

@@ -295,7 +295,7 @@ export async function initEditors(lp) {
     flashColor: "black",
     flashTime: 100,
     value: localStorage.getItem('CodeEditor2') || shapesmix,
-    el: document.querySelector("#code-editor-2-area"),
+    el: document.querySelector("#code-editor-2"),
     rules: jsrules,
   });
   CodeEditor2.name= 'CodeEditor2';
