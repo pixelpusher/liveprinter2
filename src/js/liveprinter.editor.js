@@ -17,7 +17,7 @@ import { makeVisualiser } from "vizlib";
 import { transpile } from "lp-language";
 import { schedule } from "./liveprinter.limiter.js";
 import { asyncFunctionsInAPIRegex } from "./constants/AsyncFunctionsConstants.js";
-import { shapesmix, presetscode } from "./initialcode.js";
+import { shapesmix, presetscode, loops } from "./initialcode.js";
 const commentRegex = /\/\*[\s\S]*?\*\/|([^\\:]|^)\/\/.*$/gm; // https://stackoverflow.com/questions/5989315/regex-for-match-replacing-javascript-comments-both-multiline-and-inline/15123777#15123777
 
 /////-----------------------------------------------------------
@@ -287,7 +287,7 @@ export async function initEditors(lp) {
   const CodeEditor = bitty.create({
     flashColor: "black",
     flashTime: 100,
-    value: localStorage.getItem('CodeEditor') || 'CODE',
+    value: localStorage.getItem('CodeEditor') || loops,
     el: document.querySelector("#code-editor"),
     rules: jsrules,
   });
@@ -329,10 +329,10 @@ export async function initEditors(lp) {
       debug(`${v.name} key up: ${e.target.innerText}`);
       localStorage.setItem(v.name, e.target.innerText);
     });
-    v.keyManager.register('shift+ctrl+enter', async (e)=>{
-      debug(`immediate mode code! ${e.target.innerText}`);
-      runCode(e.target.innerText, true);
-    });
+    // v.keyManager.register('shift+ctrl+enter', async (e)=>{
+    //   debug(`immediate mode code! ${e.target.innerText}`);
+    //   runCode(e.target.innerText, true);
+    // });
   });
 
   ///----------------------------------------------------------
@@ -395,18 +395,18 @@ export async function initEditors(lp) {
         minute: "2-digit",
       });
     await downloadFile(
-      CodeEditor.getDoc().getValue(),
-      "LivePrinterCode" + dateStr + ".js",
+      CodeEditor.value(),
+      "lp-editor-1-" + dateStr + ".js",
       "text/javascript"
     );
     await downloadFile(
-      GCodeEditor.getDoc().getValue(),
-      "LivePrinterGCode" + dateStr + ".js",
+      CodeEditor2.value(),
+      "lp-editor-2-" + dateStr + ".js",
       "text/javascript"
     );
     await downloadFile(
-      HistoryCodeEditor.getDoc().getValue(),
-      "LivePrinterHistoryCode" + dateStr + ".js",
+      CodeEditor3.value(),
+      "Presets-" + dateStr + ".js",
       "text/javascript"
     );
   });
