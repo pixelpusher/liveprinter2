@@ -17,7 +17,7 @@ import { makeVisualiser } from "vizlib";
 import { transpile } from "lp-language";
 import { schedule } from "./liveprinter.limiter.js";
 import { asyncFunctionsInAPIRegex } from "./constants/AsyncFunctionsConstants.js";
-import { shapesmix } from "./initialcode.js";
+import { shapesmix, presetscode } from "./initialcode.js";
 const commentRegex = /\/\*[\s\S]*?\*\/|([^\\:]|^)\/\/.*$/gm; // https://stackoverflow.com/questions/5989315/regex-for-match-replacing-javascript-comments-both-multiline-and-inline/15123777#15123777
 
 /////-----------------------------------------------------------
@@ -38,6 +38,8 @@ import {
 /////-----------------------------------------------------------
 /////------grammardraw fractals---------------------------------
 */
+
+globalThis.virtualmode = false; // when not connected to a printer 
 
 /**
  * Log code log to history editor window of choice
@@ -116,7 +118,7 @@ async function runCode(code, immediate=false) {
 
   // if printer isn't connected, we shouldn't run!
   const printerConnected = $("#header").hasClass("blinkgreen");
-  if (!printerConnected) {
+  if (!globalThis.virtualmode && !printerConnected) {
     clearError();
     const err = new Error(
       "Printer not connected! Please connect first using the printer settings tab."
@@ -300,6 +302,14 @@ export async function initEditors(lp) {
   });
   CodeEditor2.name= 'CodeEditor2';
 
+  const CodeEditor3 = bitty.create({
+    flashColor: "black",
+    flashTime: 100,
+    value: localStorage.getItem('CodeEditor3') || presetscode,
+    el: document.querySelector("#code-editor-3"),
+    rules: jsrules,
+  });
+  CodeEditor2.name= 'CodeEditor3';
 
   const HistoryCodeEditor = bitty.create({
     flashColor: "black",
@@ -310,7 +320,7 @@ export async function initEditors(lp) {
   });
   HistoryCodeEditor.name = 'HistoryCodeEditor';
 
-  const editors = [CodeEditor, CodeEditor2, HistoryCodeEditor];
+  const editors = [CodeEditor, CodeEditor2, CodeEditor3, HistoryCodeEditor];
 
   // map code evaluation
   editors.map((v) => {

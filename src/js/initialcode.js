@@ -117,89 +117,64 @@ log('CHALICE OF NOISE')
  `;
 
 export const loops = `
- 
- 
-# bpm 150
-
-global bail = false;
-  
-# moveto x:(lp.cx-50) y:lp.cy z:0.2 speed:50 
+ # moveto x:(lp.cx-50) y:lp.cy z:0.2 speed:50 
   
 lp.lh = 0.25;
   
-let notesCtr = 0;
-let durCtr = 0;
-  
-let next = function (n=1) {
-  let notes = ['c4', 'd5', 'e5', 'g4', 'a4', 'd6', 'e4', 'a4'];  
-  notesCtr = (notesCtr + 1) % notes.length;
-  return notes[notesCtr];
-}  
-  
-let dur = function (n=1) {
-  let durs = ['1/4b', '2b', '1b', '1/2b',
-             '1/2b', '1/4b', '1/2b', '1/4b'];  
-  durCtr = (durCtr + 1) % durs.length;
-  return durs[durCtr];
-}  
- 
-let c = 0;    
- 
-repeat(128, async ()=> {
-  # speed next() | drawtime dur() | turn (360/12) | elev (Math.PI/88)
-//  await (() => new Promise((resolve) => setTimeout(resolve, delaytime)))();
-  console.log(\`\${c++}\`);
-  if (bail) return;
-})
-  
-//--------------------------------------------------------------------------
-  
-repeat(64, async ()=> {
-  // make the denominator of the 360/x not evenly divisible by 8 (size of notes and durations above )
-  # speed next() | traveltime dur() | turn (360/6) | elev (Math.PI/48)
-//  await (() => new Promise((resolve) => setTimeout(resolve, delaytime)))();
-  console.log(\`\${c++}\`);
-  if (bail) return;
-})
-`;
 
+global notes = ['c4', 'd5', 'e5', 'g4', 'a4', 'd6', 'e4', 'a4'];  
+  
+global durs = ['1/4b', '2b', '1b', '1/2b',
+             '1/2b', '1/4b', '1/2b', '1/4b'];  
+ 
+global note = makenext(notes);
+global dur = makenext(durs);
+             
+
+setarray(notes, ['d4']);
+
+setarray(durs, ['1/2b']);
+
+  // make the denominator of the 360/x not evenly divisible by 8 (size of notes and durations above )
+// 6 is interesting too
+global angle = 360/12;
+
+lp.mainloop(async ()=> {
+  # speed note() | drawtime dur() | turn angle | elev (Math.PI/44) 
+});
+ `;
+  
 export const shapesmix = `//---------------------------
 // SHAPES MIX
 //---------------------------
+   
+setZoom(0.2);
+setViewX(0.27);
+setViewY(0.1);
+closeFactor(110);
  
-setZoom(0.5);
-setViewX(0.07);
-setViewY(0.04);
-closeFactor(80);
+//vizevents.delay = true;  
  
+# interval '1b' 
  
-//notes = ['d4','c4','b3']
-//notes = ['b4','c5','d5'];
-//notes = ['c4','c3','c5','a3','d5','g4','c2','c4','c3','c5','a3','d5','g4','c4','c3','c5','a3','d5','g4','g2','c4','c3','c5','a2','d5','g4']
-//notes = ['c1','c4','c5','c4','g4','a5','a1','c4','c5','a1','a4','a5','a4','b4','c5','c1','b4','b5'];
+global printer = lp;
+global sides = 6;
+global points = sides;
+global circumference = '16b';
+global cx = printer.cx;
+global cy = printer.cy;
+global minz = 0.11;
+global layerThick = 0.13;
+global bpm = 133;
+global note = 'g4';
  
-const sides = 16;
-const points = sides;
-const circumference = '12b';
-const printer = lp;
-const cx = printer.cx;
-const cy = printer.cy;
-const minz = 0.11;
-const layerThick = 0.13;
-const bpm = 133;
-const note = 'g4';
- 
- 
-// -------------------------------------------------------
-// ---------------GEN6 M-like presets---------------------
-// -------------------------------------------------------
   
 // fast fun tiny with 2 rows, 8 gets medium size and crazy
 global presetG6 = presets.genP6({
   printer,
   loop: false,
-  amtx: 0.04,
-  amty: 0.03,
+  amtx: 0.2,
+  amty: 0.23,
   minz: 0.12,
   grids: { cols: 4, rows: 8 },
   bpm,
@@ -210,11 +185,8 @@ global presetG6 = presets.genP6({
   layerThick,
 });
  
-// ---------------====START GRID====--------------------
-global it1 = iterator(presetG6);
-// ---------------==================--------------------
  
-const presetPoly2 = presets.genPoly2({
+global presetPoly2 = presets.genPoly2({
   printer,
   sides,
   circumference,
@@ -229,10 +201,10 @@ const presetPoly2 = presets.genPoly2({
   bpm,
 });
  
-const presetPoly1 = presets.genPoly1({
+global presetPoly1 = presets.genPoly1({
   printer,
   sides,
-  circumference:'24b',
+  circumference:'20b',
   cx,
   cy,
   minz:0,
@@ -244,10 +216,11 @@ const presetPoly1 = presets.genPoly1({
   bpm,
 });
  
+ 
 const h = lp.n2mm(note, '4b', bpm);
 const d = points*lp.n2mm(note, '1/4b', bpm);
  
-const presetGio = presets.makeGiacometti_1({
+global presetGio = presets.makeGiacometti_1({
   printer,
   points,
   layerThick,
@@ -261,90 +234,136 @@ const presetGio = presets.makeGiacometti_1({
 });
  
  
-global preset = presetPoly2;
+ global presetboxy = presets.makeBoxy({
+  printer,
+  amt: 0.3,
+  points: 2,
+  note: "g5",
+  t: "1b",
+  cx,
+  cy,
+  beatHeight: "5b",
+  layerThick: 0.12,
+  loop: true,
+  minz: 0.12,
+  bpm
+});
  
+ 
+global it1 = iterator(presetG6);
 global it2 = iterator(presetPoly2);
 global it3 = iterator(presetPoly1);
 global it4 = iterator(presetGio);
+global it5 = iterator(presetboxy);
  
+global currentit = it3; 
  
-global currentit = it2;
+global events = [
+  { it: it3, layers: 30, fadeout: 35 },
+  { it: it2, layers: 65, fadeout: 25 }, 
+  { it: it5, layers: null, fadeout: null },
+];
  
-// crossfade over X layers
-          
+global currentit = it5; 
+ 
+global events = [
+  { it: it2, layers: 30, fadeout: 35 },
+  { it: it5, layers: 65, fadeout: 40 }, 
+  { it: it3, layers: null, fadeout: null },
+];
+  
+
+ updateGUI();
  
 //******** RUN THE MAIN LOOP************************************
-   
  
-let layers = 0;
-let next = currentit.next;
+# temp 230
+ 
+# speed 'd7' | down 60
+ 
 
+it5.notes = ['b6'];
+  
+currentit.notes = ['b3','ab4','eb4'];
+  
+
+# bail false
+ 
 info('moving to pos');
-
-# fan 0 | prime | fan 50 | speed 80 | mov2 next() | unretract | wait 20 | fan 10 | bail false
  
-printer.mainloop(async()=>{
- info('loop1');
+# fan 0 | prime | fan 50 | speed 80 | mov2 currentit.next() | unretract | wait 20 | fan 10 | bail false
  
-  const point = next();
+lp.mainloop(async()=>{
  
-  if (point.z >= preset.height) 
-  {
-    # bail
-    
-    info('DONE! -- CLAP CLAP CLAP')  
+  await timeline(events);
  
-    return;
-  }
+  info("LOOP FINISHED!");
  
-  try 
-  {  
-    # to point | draw
  
-  } catch (err) {
-    console.error(\`draw to error vals: \${point}\`);
-    console.error(\`draw to error: \${err}\`);
-  }
- 
-  if (point.i > 0 && point.i % preset.points_per_layer === 0) 
-  {  
-    layers++;
-    console.log('layer:' + layers);
-  }
- 
-// if we hit 10 layers cross fade btw iterators
- 
-  if (layers === 20) 
-  {
-    info('crossfade triggered');
-
-    currentit = it3;
-    currentit.notes = ['g4'];
-
-    preset = presetPoly1;
-
-    const crossFadeFunc = crossfadePoints(preset.points_per_layer*30);
-    next = ()=>crossFadeFunc(it2.next(),it3.next());
-
-  } else if (layers === 40) {
-
-    info('crossfade 2 triggered');
-    const it4 = iterator(preset_gio1);
-    currentit = it4;
-    preset = preset_gio1;
-
-// preset_gio1.points_per_layer = presetPoly2.points_per_layer;
-    const crossFadeFunc = crossfadePoints(preset.points_per_layer*40);
-    next = ()=>crossFadeFunc(it3.next(),it4.next());
-  }
+  # bail
 });
  
-
-//////////////////////////////////////////////////////////////////////
-////////////////////////// END ///////////////////////////////////////
-////////////////////////// MAIN //////////////////////////////////////
-////////////////////////// LOOP //////////////////////////////////////
-////////////////////////// !!!! //////////////////////////////////////
-//////////////////////////////////////////////////////////////////////
  
+ 
+ 
+//////////////////////////////////
+
+// # bail
+// it5.done = true;
+
+it5 = iterator(presetboxy);
+ 
+it5.notes = ['ab6', 'd5', 'eb5', 'g5']; 
+  
+ 
+lp.mainloop(async()=>{
+ 
+  await run(it5);
+ 
+  info("LOOP FINISHED!");
+ 
+  # bail
+});
  `;
+
+
+export const presetscode = `
+
+// used in good tall trial,
+// got faster at start to c4 but down again to
+// c3 and d3 when shape got messy
+
+global preset5tall = presets.makeTriLineTestSlower({
+  printer,
+  points: 16,
+  amt: 0.075, // was 0.15
+  note: "E2",
+  t: "8b",
+  beatHeight: "64b",
+  layerThick: 0.2,
+  minz: 0.13,
+  loop: true,
+});
+
+global preset30tall = presets.makeTriLineTestSlower({
+  printer,
+  points: 36,
+  amt: 0.15, 
+  note: "E2",
+  t: "2.5b",
+  beatHeight: "52b",
+  layerThick: 0.15,
+  minz: 0.08,
+  loop: true,
+});
+
+global presetlinearwave = presets.makeTriLineTest({
+  printer,
+  amt: 0.5,
+  note: "C3",
+  t: "1/2b",
+  beatHeight: "12b",
+  layerThick: 0.18,
+  minz: 0.2,
+});
+`; 

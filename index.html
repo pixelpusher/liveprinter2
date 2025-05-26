@@ -88,6 +88,18 @@
               </li>
               <li class="nav-item">
                 <a
+                  id="editor-3-tab"
+                  class="flex-sm-fill text-sm-center nav-link lightnav"
+                  data-toggle="pill"
+                  href="#code-editor-3-area"
+                  role="tab"
+                  aria-controls="code-editor-3-area"
+                  aria-selected="false"
+                  >presets</a
+                >
+              </li>
+              <li class="nav-item">
+                <a
                   id="editor-2-tab"
                   class="flex-sm-fill text-sm-center nav-link lightnav"
                   data-toggle="pill"
@@ -615,6 +627,51 @@
                   <div class="col-12">
                     <div
                       id="code-editor-2"
+                      class="bitty-editor"
+                      contenteditable="true"
+                      spellcheck="false"
+                    ></div>
+                  </div>
+                </div>
+                <div class="row">
+                  <div class="col-md-12">
+                    Key buffer: <span id="command-display-history"></span>
+                  </div>
+                </div>
+                <div class="row">
+                  <div class="col-md-2 code-errors-panel">
+                    <p class="lead font-weight-bold">Errors:</p>
+                  </div>
+                  <div class="col-md-10 code-errors"></div>
+                </div>
+                <div class="row">
+                  <div class="col-md-2 instructions-panel"></div>
+                  <div class="col-md-8 instructions-panel">
+                    Highlight lines of code and hit <kbd>cmd</kbd> or
+                    <kbd>ctrl</kbd>-<kbd>enter</kbd> to
+                    <button id="sendCode" class="btn btn-success btn-sm">
+                      send
+                    </button>
+                    them
+                  </div>
+                  <div class="col-md-2 instructions-panel">
+                    <button class="btn btn-success btn-sm btn-download">
+                      download
+                    </button>
+                  </div>
+                </div>
+              </div>
+              <!--  code editor 3-->
+              <div
+                id="code-editor-3-area"
+                class="tab-pane fade show active hideAfterLoad"
+                role="tabpanel"
+                aria-labelledby="pills-editor-3-tab"
+              >
+                <div class="row">
+                  <div class="col-12">
+                    <div
+                      id="code-editor-3"
                       class="bitty-editor"
                       contenteditable="true"
                       spellcheck="false"
