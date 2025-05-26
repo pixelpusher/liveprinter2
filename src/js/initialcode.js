@@ -328,11 +328,6 @@ lp.mainloop(async()=>{
 
 
 export const presetscode = `
-
-// used in good tall trial,
-// got faster at start to c4 but down again to
-// c3 and d3 when shape got messy
-
 global preset5tall = presets.makeTriLineTestSlower({
   printer,
   points: 16,

@@ -281,7 +281,7 @@ export async function initEditors(lp) {
   // set up global module and function references
   //evalScope({ lp, gridlib, visualiser, Logger, grammarlib });
 
-  evalScope({ log: Logger.info, updateGUI, repeat, countto, numrange, info }, visualiser, gridlib);
+  evalScope({ log: Logger.info, updateGUI, printer:lp, lp, repeat, countto, numrange, info }, visualiser, gridlib);
 
 
   const CodeEditor = bitty.create({

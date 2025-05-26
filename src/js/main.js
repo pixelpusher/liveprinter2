@@ -55,7 +55,6 @@ globalThis.$ = globalThis.jquery = $;
   }
 
   const lp = new LivePrinter();
-  globalThis.lp = lp;
 
   await initEditors(lp); // create editors and setup live editing functions
   await initUI(lp); // start server communications and setup UI
