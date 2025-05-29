@@ -4,7 +4,7 @@ Copyright (C) 2024 Strudel contributors and Evan Raskob - see <https://github.co
 This program is free software: you can redistribute it and/or modify it under the terms of the GNU Affero General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version. This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Affero General Public License for more details. You should have received a copy of the GNU Affero General Public License along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-import { doError } from "./logging-utils";
+import { guiError } from "./liveprinter.ui";
 
 const AsyncFunction = async function () {}.constructor;
 
@@ -43,7 +43,7 @@ function safeEvalFunction(str, options = {}) {
         try {
           ${str};
         } catch (err) {
-          doError(err); 
+          guiError(err); 
         }
         return true;
       })()`;
@@ -55,7 +55,7 @@ function safeEvalFunction(str, options = {}) {
     result = new AsyncFunction(body);
   }
   catch (err) {
-    doError(err);
+    guiError(err);
   }
 
   return result;
@@ -75,7 +75,7 @@ export async function buildEvaluateFunction(
       newcode = transpiled;
     }
   } catch (terr) {
-    doError(`transpile error: ${terr}`);
+    guiError(`transpile error: ${terr}`);
   }
   // if no transpiler is given, we expect a single instruction (!wrapExpression)
   const options = { wrapExpression: !transpiler };
@@ -83,7 +83,7 @@ export async function buildEvaluateFunction(
     const evaluateFunction = safeEvalFunction(newcode, options);
     result.result = evaluateFunction;
   } catch (err) {
-    doError(err);
+    guiError(err);
   }
   return result;
 }

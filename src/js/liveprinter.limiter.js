@@ -1,7 +1,7 @@
 import Bottleneck from "bottleneck";
-import { doError, logError, logInfo } from "./logging-utils.js";
+import { logError, logInfo } from "./logging-utils.js";
 import { codeDoneEvent, codeQueuedEvent } from "./liveprinter.listeners.js";
-
+import { guiError } from "./liveprinter.ui.js";
 
 //-------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------
@@ -39,14 +39,14 @@ export function initLimiter() {
     } catch (err) {
       errorTxt = "Limiter restart error (failed restart too)::" + errorTxt;
     }
-    doError(Error(errorTxt));
-    logError(`Limiter error: ${errorTxt}`);
+    guiError(Error(errorTxt));
+    // logError(`Limiter error: ${errorTxt}`);
   });
 
   // Listen to the "failed" event
   _limiter.on("failed", async (error, jobInfo) => {
     const id = jobInfo.options.id;
-    logError(`Job ${id} failed: ${error}`);
+    guiError(`Job ${id} failed: ${error}`);
     // if (jobInfo.retryCount === 0) { // Here we only retry once
     //     logError(`Retrying job ${id} in 5ms!`);
     //     return 5;
@@ -55,7 +55,7 @@ export function initLimiter() {
 
   // Listen to the "retry" event
   _limiter.on("retry", (error, jobInfo) =>
-    logError(`Now retrying ${jobInfo.options.id}`)
+    guiError(`Now retrying ${jobInfo.options.id}`)
   );
 
   _limiter.on("dropped", (dropped) => {
@@ -66,7 +66,7 @@ export function initLimiter() {
     } catch (err) {
       errorTxt = dropped + "";
     }
-    doError(Error(errorTxt));
+    guiError(Error(errorTxt));
     logError(`Dropped job ${errorTxt}`);
     //   This will be called when a strategy was triggered.
     //   The dropped request is passed to this event listener.
@@ -166,7 +166,7 @@ export async function restartLimiter() {
     stopped = true;
   } catch (err) {
     stopped = false;
-    logError(`Failed to restart limiter (restartLimiter): ${err}`);
+    guiError(`Failed to restart limiter (restartLimiter): ${err}`);
   }
   if (stopped) limiter = initLimiter();
   return;

@@ -9,7 +9,7 @@
  */
 import $ from "jquery";
 import * as gridlib from "gridlib";
-import { debug, doError, setDoError } from "./logging-utils.js";
+import { debug, setDoError } from "./logging-utils.js";
 import { buildEvaluateFunction, evalScope } from "./evaluate.mjs";
 import {
   cleanGCode,
@@ -55,6 +55,8 @@ import {
 */
 
 globalThis.virtualmode = false; // when not connected to a printer
+
+let HistoryCodeEditor;
 
 /**
  * Log code log to history editor window of choice
@@ -139,12 +141,14 @@ async function runCode(code, immediate = false) {
     const err = new Error(
       "Printer not connected! Please connect first using the printer settings tab."
     );
-    doError(err);
+    guiError(err);
     throw err;
     //TODO: BIGGER ERROR MESSAGE HERE
   } else {
     if (Array.isArray(code)) {
       immediate = false;
+    } else {
+      HistoryCodeEditor.value += `\n${code}`; 
     }
 
     clearError();
@@ -176,7 +180,7 @@ async function runCode(code, immediate = false) {
       // blink the form
       blinkElem($("form"));
     } catch (err) {
-      doError(err);
+      guiError(err);
     }
   }
   return result;
@@ -311,7 +315,7 @@ export async function initEditors(lp) {
       countto,
       numrange,
       info,
-      doError,
+      guiError
     },
     visualiser,
     gridlib
@@ -320,7 +324,7 @@ export async function initEditors(lp) {
   const shapeProgressElem = document.getElementById("shape-progress");
   const timelineProgressElem = document.getElementById("timeline-progress");
 
-  const totalbars = 40;
+  const totalbars = 25;
 
   // get progress
   const progressListener = (event) => {
@@ -395,9 +399,9 @@ export async function initEditors(lp) {
     el: document.querySelector("#code-editor-3"),
     rules: jsrules,
   });
-  CodeEditor2.name = "CodeEditor3";
+  CodeEditor3.name = "CodeEditor3";
 
-  const HistoryCodeEditor = bitty.create({
+  HistoryCodeEditor = bitty.create({
     flashColor: "black",
     flashTime: 100,
     value: localStorage.getItem("HistoryCodeEditor") || "CODE",
@@ -441,7 +445,7 @@ export async function initEditors(lp) {
         // });
       })
       .fail(function () {
-        doError({ name: "error", message: "file load error:" + filename });
+        guiError({ name: "error", message: "file load error:" + filename });
       });
   });
 

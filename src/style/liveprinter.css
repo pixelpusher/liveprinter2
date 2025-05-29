@@ -167,6 +167,21 @@ td {
   z-index: 99;
 }
 
+#modal-errors {
+  background: transparent;
+} 
+
+.alert-warning {
+  background-color: #480004;
+  color: #ffffd1;
+  border: 0.05rem dashed #eeb886;
+  font-size: 0.575rem;
+}
+
+.close {
+  font-size: 0.875rem;
+}
+
 #editor-settings-nav {
   margin-top: 0em;
 }
@@ -280,8 +295,14 @@ td {
 }
 
 #progress  {
+  font-family: "ShareTechMono", monospace;
+  font-size: 0.56rem;
+  font-style: normal;
+}
+
+.prog-bar  {
   font-family: "NovaMono", monospace;
-  font-size: 0.66rem;
+  font-size: 0.2rem;
 }
 
 /* 

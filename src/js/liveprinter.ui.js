@@ -38,9 +38,7 @@ import {
 
 import {
   debug,
-  setDoError,
   setLogInfo,
-  doError,
   logError,
   setLogCommands,
   setLogPrinterState,
@@ -102,9 +100,15 @@ export function clearError() {
  */
 export function guiError(e) {
   if (typeof e !== "object") {
+
+    $(".code-errors").html(
+        "<p>" + e + "</p>"
+      );
+
     $("#modal-errors").prepend(
       "<div class='alert alert-warning alert-dismissible fade show' role='alert'>" +
-        "internal Error in doError(): bad error object:" +
+        '<em>PRINTER JAMMED!</em> '
+      +
         e +
         '<button type="button" class="close" data-dismiss="alert" aria-label="Close">' +
         '<span aria-hidden="true">&times;</span></button>' +
@@ -125,6 +129,8 @@ export function guiError(e) {
 
       $("#modal-errors").prepend(
         "<div class='alert alert-warning alert-dismissible fade show' role='alert'>" +
+        '<em>PRINTER JAMMED!</em> ' 
+        +
           err.name +
           ": " +
           err.message +
@@ -351,13 +357,13 @@ export const portsListHandler = function (event) {
       try {
         await setSerialPort({ port, baudRate });
       } catch (err) {
-        doError(err);
+        guiError(err);
       }
       try {
         const state = await getPrinterState(); // check if we are connected truly
         printerStateHandler(state);
       } catch (err) {
-        doError(err);
+        guiError(err);
       }
       $("#serial-ports-list > button").removeClass("active");
       me.addClass("active");
@@ -420,7 +426,7 @@ export const portsListHandler = function (event) {
       try {
         await setGCodeLogLevel(level);
       } catch (err) {
-        doError(err);
+        guiError(err);
       }
 
       $("#gcodelevel-list > button").removeClass("active");
@@ -521,7 +527,7 @@ export const updatePrinterState = function (state, interval = 20000) {
             const state = await getPrinterState();
             printerStateHandler(state);
           } catch (err) {
-            doError(err);
+            guiError(err);
           }
         },
         repeat: true,
@@ -748,7 +754,7 @@ export function attachScript(url) {
   try {
     document.head.appendChild(script).parentNode.removeChild(script);
   } catch (err) {
-    doError(err);
+    guiError(err);
   }
 }
 window.attachScript = attachScript; //cheat, for livecoding...
@@ -813,7 +819,6 @@ export function blinkElem($elem, speed, callback) {
  *  undefined, will crearte new one.
  */
 export async function initUI(_printer, _scheduler) {
-  setDoError(guiError);
   setLogInfo(info);
   setLogCommands(commandsHandler.log);
   setLogPrinterState(printerStateHandler);
@@ -903,7 +908,7 @@ export async function initUI(_printer, _scheduler) {
 
     const e = evt.originalEvent.error; // get the javascript event
     //Logger.debug("original event:", e);
-    doError(e);
+    guiError(e);
   });
 
   // temperature buttons
@@ -937,7 +942,7 @@ export async function initUI(_printer, _scheduler) {
         const portsList = await getSerialPorts();
         await portsListHandler(portsList);
       } catch (err) {
-        doError(err);
+        guiError(err);
       }
 
       this.working = false;
