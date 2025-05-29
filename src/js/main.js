@@ -5,13 +5,10 @@ import { LivePrinter } from "liveprinter-core";
 import {
   taskListenerUI,
   initUI,
-  sendAndHandleGCode
+  sendAndHandleGCode,
 } from "./liveprinter.ui.js";
 
-
-import {
-  doError
-} from "./logging-utils.js";
+import { doError } from "./logging-utils.js";
 
 import { initEditors } from "./liveprinter.editor";
 import { Logger } from "liveprinter-utils";
@@ -56,8 +53,8 @@ globalThis.$ = globalThis.jquery = $;
 
   const lp = new LivePrinter();
 
-  await initEditors(lp); // create editors and setup live editing functions
   await initUI(lp); // start server communications and setup UI
+  await initEditors(lp); // create editors and setup live editing functions
 
   /// attach listeners
 
@@ -71,8 +68,6 @@ globalThis.$ = globalThis.jquery = $;
   // printer.addGCodeListener(
   //     { gcodeEvent: async (gcode) => editors.recordGCode(editors.GCodeEditor, gcode) }
   // );
-
-
 })().catch((err) => {
   console.error(err);
 });

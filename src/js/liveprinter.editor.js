@@ -7,18 +7,33 @@
 /**
  * JQuery reference
  */
-import $  from "jquery";
+import $ from "jquery";
 import * as gridlib from "gridlib";
-import { debug, doError } from "./logging-utils.js";
+import { debug, doError, setDoError } from "./logging-utils.js";
 import { buildEvaluateFunction, evalScope } from "./evaluate.mjs";
-import { cleanGCode, Logger, repeat, countto, numrange } from "liveprinter-utils";
-import { downloadFile, blinkElem, clearError, updateGUI, info } from "./liveprinter.ui";
+import {
+  cleanGCode,
+  Logger,
+  repeat,
+  countto,
+  numrange,
+} from "liveprinter-utils";
+import {
+  downloadFile,
+  blinkElem,
+  clearError,
+  updateGUI,
+  info,
+  guiError
+} from "./liveprinter.ui";
 import { makeVisualiser } from "vizlib";
 import { transpile } from "lp-language";
 import { schedule } from "./liveprinter.limiter.js";
 import { asyncFunctionsInAPIRegex } from "./constants/AsyncFunctionsConstants.js";
 import { shapesmix, presetscode, loops } from "./initialcode.js";
 const commentRegex = /\/\*[\s\S]*?\*\/|([^\\:]|^)\/\/.*$/gm; // https://stackoverflow.com/questions/5989315/regex-for-match-replacing-javascript-comments-both-multiline-and-inline/15123777#15123777
+
+setDoError(guiError);
 
 /////-----------------------------------------------------------
 /////------grammardraw fractals---------------------------------
@@ -39,7 +54,7 @@ import {
 /////------grammardraw fractals---------------------------------
 */
 
-globalThis.virtualmode = false; // when not connected to a printer 
+globalThis.virtualmode = false; // when not connected to a printer
 
 /**
  * Log code log to history editor window of choice
@@ -113,13 +128,14 @@ function recordGCode(editor, gcode) {
  * @param {Boolean} immediate If true, run immediately, otherwise schedule to run
  * @returns {Boolean} success
  */
-async function runCode(code, immediate=false) {
+async function runCode(code, immediate = false) {
   let result = false;
+
+  clearError();
 
   // if printer isn't connected, we shouldn't run!
   const printerConnected = $("#header").hasClass("blinkgreen");
   if (!globalThis.virtualmode && !printerConnected) {
-    clearError();
     const err = new Error(
       "Printer not connected! Please connect first using the printer settings tab."
     );
@@ -144,20 +160,24 @@ async function runCode(code, immediate=false) {
     debug(code);
     debug("========================= -------------------------------");
 
-    const results = await buildEvaluateFunction(code, transpile);
-    const resultFunction = results.result;
-    debug(
-      `Evaluated code[immediate]: ${JSON.stringify(results.code, null, 2)}`
-    );
+    try {
+      const results = await buildEvaluateFunction(code, transpile);
+      const resultFunction = results.result;
+      debug(
+        `Evaluated code[immediate]: ${JSON.stringify(results.code, null, 2)}`
+      );
 
-    if (immediate) {
-      result = resultFunction();
-    } else {
-      result = schedule(()=>resultFunction());
+      if (immediate) {
+        result = resultFunction();
+      } else {
+        result = schedule(async () => resultFunction());
+      }
+
+      // blink the form
+      blinkElem($("form"));
+    } catch (err) {
+      doError(err);
     }
-
-    // blink the form
-    blinkElem($("form"));
   }
   return result;
 }
@@ -198,8 +218,8 @@ function storageAvailable(type) {
   }
 }
 
-const bittyRegEx = /\b(global|new|if|else|do|while|switch|for|of|continue|break|return|typeof|function|var|const|let|\.length)(?=[^\w])/;
-
+const bittyRegEx =
+  /\b(global|new|if|else|do|while|switch|for|of|continue|break|return|typeof|function|var|const|let|\.length)(?=[^\w])/;
 
 /**
  * Initialise editors and events, etc.
@@ -222,7 +242,7 @@ export async function initEditors(lp) {
   });
 
   // grammardraw -----------------------------------
-/*
+  /*
   const listener = {
     step: (v) => loginfo(`step event: ${v}`),
     action: ({
@@ -281,51 +301,117 @@ export async function initEditors(lp) {
   // set up global module and function references
   //evalScope({ lp, gridlib, visualiser, Logger, grammarlib });
 
-  evalScope({ log: Logger.info, updateGUI, printer:lp, lp, repeat, countto, numrange, info }, visualiser, gridlib);
+  evalScope(
+    {
+      log: Logger.info,
+      updateGUI,
+      printer: lp,
+      lp,
+      repeat,
+      countto,
+      numrange,
+      info,
+      doError,
+    },
+    visualiser,
+    gridlib
+  );
 
+  const shapeProgressElem = document.getElementById("shape-progress");
+  const timelineProgressElem = document.getElementById("timeline-progress");
+
+  const totalbars = 40;
+
+  // get progress
+  const progressListener = (event) => {
+    switch (event.type) {
+      case "shape":
+        const bars =
+          Math.floor(
+            totalbars *
+            event.it.current.i / (event.it.points * event.it.totallayers)
+          );
+        let str = "";
+        for (let i = 0; i < bars; i++) {
+          str += "-";
+        }
+        for (let i = bars; i < totalbars; i++) {
+          str += "*";
+        }
+        shapeProgressElem.innerHTML = str;
+        break;
+
+      case "timeline":
+        if (event.progress) {
+          const bars = totalbars * parseFloat(event.progress);
+          let str = "[t]";
+          for (let i = 0; i < bars; i++) {
+            str += "-";
+          }
+          for (let i = bars; i < totalbars; i++) {
+            str += "*";
+          }
+          timelineProgressElem.innerHTML = str;
+        } else if (event.crossfade) {
+          const bars = totalbars * parseFloat(event.crossfade);
+          let str = "[cf]";
+          for (let i = 0; i < bars; i++) {
+            str += "-";
+          }
+          for (let i = bars; i < totalbars; i++) {
+            str += "*";
+          }
+          timelineProgressElem.innerHTML = str;
+        }
+        break;
+    }
+    // console.info(event);
+  };
+
+  gridlib.onProgress(progressListener);
 
   const CodeEditor = bitty.create({
     flashColor: "black",
     flashTime: 100,
-    value: localStorage.getItem('CodeEditor') || loops,
+    value: localStorage.getItem("CodeEditor") || loops,
     el: document.querySelector("#code-editor"),
     rules: jsrules,
   });
-  CodeEditor.name= 'CodeEditor';
+  CodeEditor.name = "CodeEditor";
 
   const CodeEditor2 = bitty.create({
     flashColor: "black",
     flashTime: 100,
-    value: localStorage.getItem('CodeEditor2') || shapesmix,
+    value: localStorage.getItem("CodeEditor2") || shapesmix,
     el: document.querySelector("#code-editor-2"),
     rules: jsrules,
   });
-  CodeEditor2.name= 'CodeEditor2';
+  CodeEditor2.name = "CodeEditor2";
 
   const CodeEditor3 = bitty.create({
     flashColor: "black",
     flashTime: 100,
-    value: localStorage.getItem('CodeEditor3') || presetscode,
+    value: localStorage.getItem("CodeEditor3") || presetscode,
     el: document.querySelector("#code-editor-3"),
     rules: jsrules,
   });
-  CodeEditor2.name= 'CodeEditor3';
+  CodeEditor2.name = "CodeEditor3";
 
   const HistoryCodeEditor = bitty.create({
     flashColor: "black",
     flashTime: 100,
-    value: localStorage.getItem('HistoryCodeEditor') || 'CODE',
+    value: localStorage.getItem("HistoryCodeEditor") || "CODE",
     el: document.querySelector("#history-code-editor"),
     rules: jsrules,
   });
-  HistoryCodeEditor.name = 'HistoryCodeEditor';
+  HistoryCodeEditor.name = "HistoryCodeEditor";
 
   const editors = [CodeEditor, CodeEditor2, CodeEditor3, HistoryCodeEditor];
 
   // map code evaluation
   editors.map((v) => {
     v.subscribe("run", runCode);
-    v.subscribe('keyup', async (e)=>{
+    v.subscribe("keyup", async (e) => {
       debug(`${v.name} key up: ${e.target.innerText}`);
       localStorage.setItem(v.name, e.target.innerText);
     });

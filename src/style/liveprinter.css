@@ -279,6 +279,11 @@ td {
   width: 100%;
 }
 
+#progress  {
+  font-family: "NovaMono", monospace;
+  font-size: 0.66rem;
+}
+
 /* 
 BITTY
 */
@@ -318,7 +323,8 @@ BITTY
 }
 
 ::selection {
-  background: #222;
+  background: #d8d477;
+  opacity: 0.6;
   color: white;
 }
 
@@ -338,7 +344,7 @@ BITTY
   font-family: "ShareTechMono", monospace;
   color: #4fc3c7;
   /* font-style: italic; */
-  
+
   font-size: 125%;
   font-weight: 800;
 }

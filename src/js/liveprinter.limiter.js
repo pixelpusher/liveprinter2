@@ -73,7 +73,7 @@ export function initLimiter() {
   });
 
   _limiter.on("queued", async function (info) {
-    logInfo(`queued: ${_limiter.queued()}`);
+    //logInfo(`queued: ${_limiter.queued()}`);
     info.queued = _limiter.queued();
 
     await codeQueuedEvent(info)

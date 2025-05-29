@@ -6,55 +6,84 @@ This program is free software: you can redistribute it and/or modify it under th
 
 import { doError } from "./logging-utils";
 
+const AsyncFunction = async function () {}.constructor;
+
 export const evalScope = async (...args) => {
-    const results = await Promise.allSettled(args);
-    const modules = results.filter((result) => result.status === 'fulfilled').map((r) => r.value);
-    results.forEach((result, i) => {
-      if (result.status === 'rejected') {
-        console.warn(`evalScope: module with index ${i} could not be loaded:`, result.reason);
-      }
-    });
-    // Object.assign(globalThis, ...modules);
-    // below is a fix for above commented out line
-    // same error as https://github.com/vitest-dev/vitest/issues/1807 when running this on astro server
-    modules.forEach((module) => {
-      Object.entries(module).forEach(([name, value]) => {
-        globalThis[name] = value;
-      });
-    });
-    return modules;
-  };
-  
-  function safeEvalFunction(str, options = {}) {
-    const { wrapExpression = true, wrapAsync = true } = options;
-    if (wrapExpression) {
-      str = `{${str}}`;
+  const results = await Promise.allSettled(args);
+  const modules = results
+    .filter((result) => result.status === "fulfilled")
+    .map((r) => r.value);
+  results.forEach((result, i) => {
+    if (result.status === "rejected") {
+      console.warn(
+        `evalScope: module with index ${i} could not be loaded:`,
+        result.reason
+      );
     }
-    if (wrapAsync) {
-      str = `(async ()=>${str})()`;
-    }
-    const body = `"use strict";return (${str})`;
-    return new Function(body);
+  });
+  // Object.assign(globalThis, ...modules);
+  // below is a fix for above commented out line
+  // same error as https://github.com/vitest-dev/vitest/issues/1807 when running this on astro server
+  modules.forEach((module) => {
+    Object.entries(module).forEach(([name, value]) => {
+      globalThis[name] = value;
+    });
+  });
+  return modules;
+};
+
+function safeEvalFunction(str, options = {}) {
+  const { wrapExpression = true, wrapAsync = true } = options;
+  if (wrapExpression) {
+    str = `{${str}}`;
   }
+  if (wrapAsync) {
+    str = `(async ()=>
+      {
+        try {
+          ${str};
+        } catch (err) {
+          doError(err); 
+        }
+        return true;
+      })()`;
+  }
+  const body = `"use strict";return ${str}`;
   
-  export const buildEvaluateFunction = async (code, transpiler, transpilerOptions) => {
-    let newcode = code;
-    let result = { mode: 'javascript', result: null, code:newcode };
+  let result = new AsyncFunction(`"use strict";return true`);
+  try {
+    result = new AsyncFunction(body);
+  }
+  catch (err) {
+    doError(err);
+  }
+
+  return result;
+}
+
+export async function buildEvaluateFunction(
+  code,
+  transpiler,
+  transpilerOptions
+) {
+  let newcode = code;
+  let result = { mode: "javascript", result: null, code: newcode };
+  try {
     if (transpiler) {
       // transform liveprinter grammar and javascript mix into javascript code
       const transpiled = transpiler(code, transpilerOptions);
       newcode = transpiled;
     }
-    // if no transpiler is given, we expect a single instruction (!wrapExpression)
-    const options = { wrapExpression: !!transpiler };
-    try {
-      const evaluateFunction = safeEvalFunction(newcode, options);  
-      result.result = evaluateFunction;  
-
-    }
-    catch (err)
-    {
-      doError(err);
-    }
-    return result;
-  };
+  } catch (terr) {
+    doError(`transpile error: ${terr}`);
+  }
+  // if no transpiler is given, we expect a single instruction (!wrapExpression)
+  const options = { wrapExpression: !transpiler };
+  try {
+    const evaluateFunction = safeEvalFunction(newcode, options);
+    result.result = evaluateFunction;
+  } catch (err) {
+    doError(err);
+  }
+  return result;
+}
