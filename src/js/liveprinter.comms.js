@@ -25,7 +25,6 @@ import {
   logPrinterState,
   logCommands,
 } from "./logging-utils.js";
-import { scheduleFunction } from "./liveprinter.limiter.js";
 import Logger from "liveprinter-utils/logger";
 import $ from "jquery";
 
@@ -426,20 +425,20 @@ export async function sendGCodeRPC(gcode) {
  * @alias comms:scheduleGCode
  * @returns {Object} result Returns json promise object containing printer response
  */
-export async function scheduleGCode(gcode, priority = 4) {
-  // 0-9, lower higher
-  const reqId = "req" + vars.requestId++;
+// export async function scheduleGCode(gcode, priority = 4) {
+//   // 0-9, lower higher
+//   const reqId = "req" + vars.requestId++;
 
-  let result = null; // result to be handled later -- see handleGCodeResponse
+//   let result = null; // result to be handled later -- see handleGCodeResponse
 
-  if (vars.logAjax) logCommands(`SENDING ${reqId}`);
-  return scheduleFunction(
-    { priority: priority, weight: 1, id: reqId, expiration: maxCodeWaitTime },
-    async () => {
-      result = await sendGCodeRPC(gcode);
-      if (vars.logAjax) logCommands(`RECEIVED ${reqId}`);
-      return result;
-    }
-  );
-}
+//   if (vars.logAjax) logCommands(`SENDING ${reqId}`);
+//   return scheduleFunction(
+//     { priority: priority, weight: 1, id: reqId, expiration: maxCodeWaitTime },
+//     async () => {
+//       result = await sendGCodeRPC(gcode);
+//       if (vars.logAjax) logCommands(`RECEIVED ${reqId}`);
+//       return result;
+//     }
+//   );
+// }
 

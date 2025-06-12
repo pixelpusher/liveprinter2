@@ -28,12 +28,13 @@ import {
 } from "./liveprinter.ui";
 import { makeVisualiser } from "vizlib";
 import { transpile } from "lp-language";
-import { schedule } from "./liveprinter.limiter.js";
 import { asyncFunctionsInAPIRegex } from "./constants/AsyncFunctionsConstants.js";
 import { shapesmix, presetscode, loops } from "./initialcode.js";
 const commentRegex = /\/\*[\s\S]*?\*\/|([^\\:]|^)\/\/.*$/gm; // https://stackoverflow.com/questions/5989315/regex-for-match-replacing-javascript-comments-both-multiline-and-inline/15123777#15123777
 
 setDoError(guiError);
+
+let limiter = null; // limiter for async queue
 
 /////-----------------------------------------------------------
 /////------grammardraw fractals---------------------------------
@@ -174,7 +175,8 @@ async function runCode(code, immediate = false) {
       if (immediate) {
         result = resultFunction();
       } else {
-        result = schedule(async () => resultFunction());
+        console.log(limiter);
+        result = limiter.schedule(() => resultFunction());
       }
 
       // blink the form
@@ -229,7 +231,10 @@ const bittyRegEx =
  * Initialise editors and events, etc.
  * @returns {PromiseFulfilledResult}
  */
-export async function initEditors(lp) {
+export async function initEditors(lp, _limiter) {
+
+  limiter = _limiter;
+
   const jsrules = {
     comments: /(\/\/.*)/g,
     keywords: bittyRegEx,

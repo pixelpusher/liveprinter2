@@ -43,6 +43,7 @@ function safeEvalFunction(str, options = {}) {
         try {
           ${str};
         } catch (err) {
+          console.log(\"ERROR in wrapped function [transpilation]: ${str}\");
           guiError(err); 
         }
         return true;
@@ -50,11 +51,12 @@ function safeEvalFunction(str, options = {}) {
   }
   const body = `"use strict";return ${str}`;
   
-  let result = new AsyncFunction(`"use strict";return true`);
+  let result = new AsyncFunction(`"use strict";return false`);
   try {
-    result = new AsyncFunction(body);
+    result = new AsyncFunction(body.replaceAll(/\r?\n|\r/gm,''));
   }
   catch (err) {
+    console.error(`Error creating new function: ${typeof err == 'string' ? err : JSON.stringify(err)}`);
     guiError(err);
   }
 
@@ -83,6 +85,7 @@ export async function buildEvaluateFunction(
     const evaluateFunction = safeEvalFunction(newcode, options);
     result.result = evaluateFunction;
   } catch (err) {
+    console.log(`ERROR evaluating transpiled code ${JSON.stringify(err,null,2)}`)
     guiError(err);
   }
   return result;

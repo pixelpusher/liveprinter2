@@ -8,8 +8,8 @@ import {
   sendAndHandleGCode,
 } from "./liveprinter.ui.js";
 
+import { Limiter } from "./liveprinter.limiter.js";
 import { doError } from "./logging-utils.js";
-
 import { initEditors } from "./liveprinter.editor";
 import { Logger } from "liveprinter-utils";
 import $ from "jquery";
@@ -52,9 +52,10 @@ globalThis.$ = globalThis.jquery = $;
   }
 
   const lp = new LivePrinter();
+  const limiter = new Limiter();
 
-  await initUI(lp); // start server communications and setup UI
-  await initEditors(lp); // create editors and setup live editing functions
+  await initUI(lp, limiter); // start server communications and setup UI
+  await initEditors(lp, limiter); // create editors and setup live editing functions
 
   /// attach listeners
 

@@ -44,7 +44,6 @@ import {
   setLogPrinterState,
 } from "./logging-utils.js";
 
-import { restartLimiter } from "./liveprinter.limiter.js";
 import {
   okEvent,
   otherEvent,
@@ -53,6 +52,7 @@ import {
   onCodeQueued,
   onPosition,
 } from "./liveprinter.listeners.js";
+import { Limiter } from "tone";
 
 export let infoListElement = "#info > ul"; // for logging info to GUI
 
@@ -60,6 +60,7 @@ let lastErrorMessage = "none"; // last error message for GUI
 
 let scheduler = null; // task scheduler, see init()
 let printer = null; // liveprinter printer object
+let limiter = null; // limiting scheduler
 
 /**
  * convenience function for sending GCode and handling response in GUI -- should it go here?
@@ -114,6 +115,8 @@ export function guiError(e) {
         '<span aria-hidden="true">&times;</span></button>' +
         "</div>"
     );
+    Logger.error(e);
+
   } else {
     let err = e;
     if (e.error !== undefined) err = e.error;
@@ -818,7 +821,7 @@ export function blinkElem($elem, speed, callback) {
  * @param {Scheduler} _scheduler Scheduler object to use for tasks, repeating events, etc. If
  *  undefined, will crearte new one.
  */
-export async function initUI(_printer, _scheduler) {
+export async function initUI(_printer, _limiter, _scheduler) {
   setLogInfo(info);
   setLogCommands(commandsHandler.log);
   setLogPrinterState(printerStateHandler);
@@ -840,6 +843,8 @@ export async function initUI(_printer, _scheduler) {
   // we can use our own, or the one passed in
   if (!_scheduler) scheduler = new Scheduler();
   else scheduler = _scheduler;
+
+  if (!_limiter) throw new Error("No Limiter for GUI!");
 
   ///--------------------------------------
   ///---------setup GUI--------------------
@@ -959,7 +964,7 @@ export async function initUI(_printer, _scheduler) {
   });
 
   /// Clear printer queue on server
-  $("#clear-btn").on("click", restartLimiter);
+  $("#clear-btn").on("click", async ()=>{await limiter.stop(); limiter.init(); });
 
   onPosition(async (v) => moveHandler(v));
   onCodeDone(async (v) => {
