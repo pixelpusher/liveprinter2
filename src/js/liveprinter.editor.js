@@ -81,8 +81,9 @@ function recordCode(editor, code) {
       second: "2-digit",
     }) + "\n";
 
-  const codeText = "//" + dateStr + code + (code.endsWith("\n") ? "" : "\n");
+  const codeText = "//" + dateStr + "\n\n" + code + (code.endsWith("\n") ? "" : "\n" + "\n");
 
+  editor.value += codeText;
   //return [code,lastLine];
 }
 
@@ -149,7 +150,7 @@ async function runCode(code, immediate = false) {
     if (Array.isArray(code)) {
       immediate = false;
     } else {
-      HistoryCodeEditor.value += `\n${code}`; 
+      recordCode(HistoryCodeEditor,code);
     }
 
     clearError();
@@ -173,9 +174,13 @@ async function runCode(code, immediate = false) {
       );
 
       if (immediate) {
-        result = resultFunction();
+        try 
+        {result = resultFunction();}
+        catch(err)
+        {
+          guiError(err);
+        }
       } else {
-        console.log(limiter);
         result = limiter.schedule(() => resultFunction());
       }
 
@@ -320,7 +325,11 @@ export async function initEditors(lp, _limiter) {
       countto,
       numrange,
       info,
-      guiError
+      guiError,
+      /**
+       * @param {Number} d
+       */
+      delay(d) {visualiser.vizevents.delay = d;},
     },
     visualiser,
     gridlib
@@ -424,10 +433,13 @@ export async function initEditors(lp, _limiter) {
       debug(`${v.name} key up: ${e.target.innerText}`);
       localStorage.setItem(v.name, e.target.innerText);
     });
-    // v.keyManager.register('shift+ctrl+enter', async (e)=>{
-    //   debug(`immediate mode code! ${e.target.innerText}`);
-    //   runCode(e.target.innerText, true);
-    // });
+    v.keyManager.register('shift+Enter', async (e)=>{
+      e.preventDefault();
+      const txt = window.getSelection().getRangeAt( 0 ).toString();
+      console.log(`IMMEDIATE ${txt}`);
+      debug(`immediate mode code! ${txt}`);
+      await runCode(txt, true);
+    });
   });
 
   ///----------------------------------------------------------

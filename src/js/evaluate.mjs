@@ -35,12 +35,13 @@ export const evalScope = async (...args) => {
 function safeEvalFunction(str, options = {}) {
   const { wrapExpression = true, wrapAsync = true } = options;
   if (wrapExpression) {
-    str = `{${str}}`;
+    str = `{${str}}`; // reset bail
   }
   if (wrapAsync) {
     str = `(async ()=>
       {
         try {
+        lp.bail(false);
           ${str};
         } catch (err) {
           console.log(\"ERROR in wrapped function [transpilation]: ${str}\");
