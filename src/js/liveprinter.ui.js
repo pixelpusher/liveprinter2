@@ -90,8 +90,10 @@ export function updateGUI() {
  */
 export function clearError() {
   $(".code-errors").html("<p>[no errors]</p>");
-  $("#modal-errors").empty();
+  $(".modal-errors").empty();
 }
+
+let lastErrorTime = 0;
 
 /**
  * Show an error in the HTML GUI
@@ -100,13 +102,24 @@ export function clearError() {
  * @memberOf LivePrinter
  */
 export function guiError(e) {
+  // avoid repeated errors  
+  const now = Date.now();
+  if (now - lastErrorTime < 1000) {
+    return;
+  }
+
+  lastErrorTime = now;
+
+  // if (lastErrorMessage !== undefined && err.message !== lastErrorMessage) {
+  //     lastErrorMessage = err.message;
+
   if (typeof e !== "object") {
 
     $(".code-errors").html(
         "<p>" + e + "</p>"
       );
 
-    $("#modal-errors").prepend(
+    $(".modal-errors").prepend(
       "<div class='alert alert-warning alert-dismissible fade show' role='alert'>" +
         '<em>PRINTER JAMMED!</em> '
       +
@@ -115,39 +128,34 @@ export function guiError(e) {
         '<span aria-hidden="true">&times;</span></button>' +
         "</div>"
     );
-    Logger.error(e);
 
   } else {
     let err = e;
     if (e.error !== undefined) err = e.error;
     const lineNumber = err.lineNumber == null ? -1 : e.lineNumber;
 
-    // avoid repeated errors!!!
-    if (lastErrorMessage !== undefined && err.message !== lastErrorMessage) {
-      lastErrorMessage = err.message;
-      // report to user
-      $(".code-errors").html(
-        "<p>" + err.name + ": " + err.message + " (line:" + lineNumber + ")</p>"
-      );
+    // report to user
+    $(".code-errors").html(
+      "<p>" + err.name + ": " + err.message + " (line:" + lineNumber + ")</p>"
+    );
 
-      $("#modal-errors").prepend(
-        "<div class='alert alert-warning alert-dismissible fade show' role='alert'>" +
-        '<em>PRINTER JAMMED!</em> ' 
-        +
-          err.name +
-          ": " +
-          err.message +
-          " (line:" +
-          lineNumber +
-          ")" +
-          '<button type="button" class="close" data-dismiss="alert" aria-label="Close">' +
-          '<span aria-hidden="true">&times;</span></button>' +
-          "</div>"
-      );
-
-      Logger.error(err);
-    }
+    $(".modal-errors").prepend(
+      "<div class='alert alert-warning alert-dismissible fade show' role='alert'>" +
+      '<em>PRINTER JAMMED!</em> ' 
+      +
+        err.name +
+        ": " +
+        err.message +
+        " (line:" +
+        lineNumber +
+        ")" +
+        '<button type="button" class="close" data-dismiss="alert" aria-label="Close">' +
+        '<span aria-hidden="true">&times;</span></button>' +
+        "</div>"
+    );
   }
+  Logger.error(e);
+}
 
   /*
     Logger.debug("SyntaxError? " + (e instanceof SyntaxError)); // true
@@ -169,7 +177,6 @@ export function guiError(e) {
         CodeEditor.setSelection({ line: (e.lineNumber-1), ch: e.columnNumber }, { line: (e.lineNumber-1), ch: (e.columnNumber + 1) });
     }
     */
-}
 
 /**
  * Parse temperature response from printer firmware (Marlin)

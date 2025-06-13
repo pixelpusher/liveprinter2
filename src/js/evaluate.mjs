@@ -37,33 +37,38 @@ function safeEvalFunction(str, options = {}) {
   if (wrapExpression) {
     str = `{${str}}`; // reset bail
   }
+  if (str[str.length - 1] !== ";") {
+    str += ";"; // ensure it ends with a semicolon
+  }
   if (wrapAsync) {
     str = `try 
     {
       return (async ()=>
         {
           lp.bail(false);
-            ${str};
+            ${str}
           return true;
         })();
     } catch (err) {
-      console.log(\"ERROR in wrapped function [transpilation]: ${str}\");
       guiError(err); 
       return false;
     }`;
   }
-  const body = `"use strict";${str}`;
+
+
+  //console.log(\"ERROR in wrapped function [transpilation]: ${str.replaceAll(/'|"/gm, "\"")}\");
+
+  // remove all unescaped newlines
+  const body = `"use strict";${str}`.replaceAll(/\r?\n|\r/gm, "");
 
   let result = new AsyncFunction(`"use strict";return false`);
   try {
-    result = new AsyncFunction(body.replaceAll(/\r?\n|\r/gm, ""));
+    result = new AsyncFunction(body);
   } catch (err) {
-    console.error(
-      `Error creating new function: ${
-        typeof err == "string" ? err : JSON.stringify(err)
-      }`
-    );
-    guiError(err);
+      // `Error creating new function: ${
+      //   typeof err == "string" ? err : JSON.stringify(err, null, 2)
+      // }`
+    guiError( err  );
   }
 
   return result;
