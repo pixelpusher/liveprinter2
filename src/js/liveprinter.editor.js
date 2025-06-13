@@ -11,6 +11,7 @@ import $ from "jquery";
 import * as gridlib from "gridlib";
 import { debug, setDoError } from "./logging-utils.js";
 import { buildEvaluateFunction, evalScope } from "./evaluate.mjs";
+import Sequence from "./Sequence.js";
 import {
   cleanGCode,
   Logger,
@@ -330,6 +331,7 @@ export async function initEditors(lp, _limiter) {
        * @param {Number} d
        */
       delay(d) {visualiser.vizevents.delay = d;},
+      seq:Sequence
     },
     visualiser,
     gridlib

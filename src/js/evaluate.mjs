@@ -38,26 +38,31 @@ function safeEvalFunction(str, options = {}) {
     str = `{${str}}`; // reset bail
   }
   if (wrapAsync) {
-    str = `(async ()=>
-      {
-        try {
-        lp.bail(false);
-          ${str};
-        } catch (err) {
-          console.log(\"ERROR in wrapped function [transpilation]: ${str}\");
-          guiError(err); 
-        }
-        return true;
-      })()`;
+    str = `try 
+    {
+      return (async ()=>
+        {
+          lp.bail(false);
+            ${str};
+          return true;
+        })();
+    } catch (err) {
+      console.log(\"ERROR in wrapped function [transpilation]: ${str}\");
+      guiError(err); 
+      return false;
+    }`;
   }
-  const body = `"use strict";return ${str}`;
-  
+  const body = `"use strict";${str}`;
+
   let result = new AsyncFunction(`"use strict";return false`);
   try {
-    result = new AsyncFunction(body.replaceAll(/\r?\n|\r/gm,''));
-  }
-  catch (err) {
-    console.error(`Error creating new function: ${typeof err == 'string' ? err : JSON.stringify(err)}`);
+    result = new AsyncFunction(body.replaceAll(/\r?\n|\r/gm, ""));
+  } catch (err) {
+    console.error(
+      `Error creating new function: ${
+        typeof err == "string" ? err : JSON.stringify(err)
+      }`
+    );
     guiError(err);
   }
 
@@ -86,7 +91,9 @@ export async function buildEvaluateFunction(
     const evaluateFunction = safeEvalFunction(newcode, options);
     result.result = evaluateFunction;
   } catch (err) {
-    console.log(`ERROR evaluating transpiled code ${JSON.stringify(err,null,2)}`)
+    console.log(
+      `ERROR evaluating transpiled code ${JSON.stringify(err, null, 2)}`
+    );
     guiError(err);
   }
   return result;
