@@ -12,6 +12,7 @@ import * as gridlib from "gridlib";
 import { debug, setDoError } from "./logging-utils.js";
 import { buildEvaluateFunction, evalScope } from "./evaluate.mjs";
 import Sequence from "./Sequence.js";
+import * as math from "mathjs"; 
 import {
   cleanGCode,
   Logger,
@@ -32,10 +33,14 @@ import { transpile } from "lp-language";
 import { asyncFunctionsInAPIRegex } from "./constants/AsyncFunctionsConstants.js";
 import { shapesmix, presetscode, loops } from "./initialcode.js";
 const commentRegex = /\/\*[\s\S]*?\*\/|([^\\:]|^)\/\/.*$/gm; // https://stackoverflow.com/questions/5989315/regex-for-match-replacing-javascript-comments-both-multiline-and-inline/15123777#15123777
+const mathjsRegex = /(m\')(.*?)(\')/g; // matches mathjs function calls like m'sin(0.5)'
 
 setDoError(guiError);
 
 let limiter = null; // limiter for async queue
+
+globalThis.math = math; // make mathjs available globally
+globalThis.parser = math.parser(); // make parser available globally (see runCode)
 
 /////-----------------------------------------------------------
 /////------grammardraw fractals---------------------------------
@@ -162,6 +167,8 @@ async function runCode(code, immediate = false) {
 
     // replace globals in js
     code = code.replace(/^[ ]*global[ ]+/gm, "globalThis.");
+
+    code = code.replaceAll(mathjsRegex,  "parser.evaluate('$2')");
 
     debug("code before pre-processing-------------------------------");
     debug(code);

@@ -10,7 +10,7 @@
   },
   "devDependencies": {
     "bottleneck": "^2.19.5",
-    "codemirror": "^6.0.1",
+    "codemirror": "^6.0.2",
     "gridlib": "github:pixelpusher/gridlib",
     "jquery": "^3.7.1",
     "liveprinter-core": "github:pixelpusher/liveprinter-core",
@@ -20,6 +20,7 @@
     "vizlib": "github:pixelpusher/vizlib"
   },
   "dependencies": {
+    "mathjs": "^14.5.3",
     "tone": "^15.1.22"
   }
 }
