@@ -3,7 +3,6 @@ import { repeat, numrange, countto, Scheduler } from "liveprinter-utils";
 import { LivePrinter } from "liveprinter-core";
 
 import {
-  taskListenerUI,
   initUI,
   sendAndHandleGCode,
 } from "./liveprinter.ui.js";
@@ -19,7 +18,6 @@ globalThis.$ = globalThis.jquery = $;
 //require('./svg/SVGReader'); // svg util class
 //require('./svg/svg2gcode'); // svg gcode converter
 
-// now that browsers have deferred loading, this isn't really needed anymore?
 (async function (w) {
   "use strict";
 
@@ -56,7 +54,7 @@ globalThis.$ = globalThis.jquery = $;
 
   await initUI(lp, limiter); // start server communications and setup UI
   await initEditors(lp, limiter); // create editors and setup live editing functions
-
+  
   /// attach listeners
 
   lp.addGCodeListener({

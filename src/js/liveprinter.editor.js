@@ -132,6 +132,16 @@ function recordGCode(editor, gcode) {
   return usefulGCode;
 }
 
+
+function preprocess(code) {
+    code = code.replaceAll(mathjsRegex,  "parser.evaluate('$2')");
+
+    debug("code before pre-preprocessing-------------------------------");
+    debug(code);
+    debug("========================= -------------------------------");
+    return code;
+  }
+
 /**
  * This function takes the highlighted "local" code from the editor and runs the compiling and error-checking functions.
  * @param {String} code
@@ -161,18 +171,7 @@ async function runCode(code, immediate = false) {
 
     clearError();
 
-    code = code.replace(commentRegex, (match, p1) => {
-      return p1;
-    });
-
-    // replace globals in js
-    code = code.replace(/^[ ]*global[ ]+/gm, "globalThis.");
-
-    code = code.replaceAll(mathjsRegex,  "parser.evaluate('$2')");
-
-    debug("code before pre-processing-------------------------------");
-    debug(code);
-    debug("========================= -------------------------------");
+    code = preprocess(code)
 
     try {
       const results = await buildEvaluateFunction(code, transpile);
