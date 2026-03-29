@@ -1,6 +1,5 @@
-import { PulseOscillator, MonoSynth, start } from "tone";
+import { MonoSynth, start } from "tone";
 import { Logger } from "liveprinter-utils";
-import { e } from "mathjs";
 
 let started = false;
 
