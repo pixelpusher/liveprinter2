@@ -306,32 +306,31 @@ td {
 }
 
 /* 
-BITTY
+CODEMIRROR EDITOR STYLING
 */
-.bitty-editor {
-  font-family: "NovaMono", monospace;
-  /* position: absolute; */
-  width: 98%;
+.cm-editor {
   height: 80vh;
-  /* background: rgb(0, 0, 0); */
-  background: transparent;
-  color: #efeded;
+  font-family: "NovaMono", monospace;
   font-size: 14px;
-  font-weight: 700;
-  outline: none;
-  overflow-y: scroll;
-  white-space: pre-wrap;
-  counter-reset: line;
-  padding-left: 0.438rem;
-  padding-top: 0.438rem;
+  font-weight: 600;
+  background: transparent;
+  color: hsla(67, 100%, 69%, 0.816);
+  padding: 0;
 }
 
-.bitty-editor div::before {
-  content: counter(line);
-  counter-increment: line;
-  position: absolute;
-  right: calc(100% + 2rem);
-  opacity: 0.8;
+.cm-editor.cm-focused {
+  outline: none;
+}
+
+
+.cm-content {
+  font-family: "NovaMono", monospace;
+  padding: 0.438rem 0 0.438rem 0.438rem;
+  white-space: pre-wrap;
+}
+
+.cm-line {
+  padding-left: 0;
 }
 
 #visualiser {
@@ -350,45 +349,54 @@ BITTY
 }
 
 /* syntax coloring rules */
-.bitty-keywords {
-  font-weight: bold;
+/* LivePrinter syntax highlighting for CodeMirror */
+.cm-keyword {
   color: rgb(22, 255, 111);
+  font-weight: bold;
 }
-.bitty-strings {
+
+.cm-string {
   color: #c594c3;
   font-style: italic;
 }
-.bitty-comments {
-  display: block;
-  /* max-width: 80%; */
-  margin: 0.2rem auto;
-  font-family: "ShareTechMono", monospace;
-  color: #4fc3c7;
-  /* font-style: italic; */
 
-  font-size: 125%;
-  font-weight: 800;
+.cm-comment {
+  color: #888;
+  font-style: italic;
 }
-/* .bitty-comments::after {
-  display: block;
-} */
 
-/* syntax coloring rules */
-.bitty-lp {
+.cm-number {
+  color: #ddd;
+}
+
+.cm-atom {
+  color: #ffa04e;
+}
+
+.cm-variable {
+  color: #efeded;
+}
+
+.cm-property {
+  color: #efeded;
+}
+
+.cm-operator {
+  color: #efeded;
+}
+
+.cm-function {
+  color: rgb(22, 255, 111);
+}
+
+/* Liveprinter-specific syntax highlighting */
+.lp-command-line {
+  background-color: rgba(200, 150, 255, 0.1);
+}
+
+.lp-function {
+  color: rgb(200, 150, 255);
   font-weight: bold;
-  color: rgb(244, 199, 78);
-}
-/* 
- * fancy pseudo-selector to not color numbers when they are inside
- * coments or strings
- */
-.bitty-numbers:not(.bitty-strings > span, .bitty-comments > span) {
-  color: rgb(241, 241, 99);
-}
-
-.bitty-active {
-  background: rgb(47, 47, 16);
-  /* opacity: 0.2; */
 }
 
 kbd {

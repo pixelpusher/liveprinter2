@@ -1,4 +1,4 @@
-﻿﻿<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
   <head>
     <meta charset="utf-8" />
@@ -9,8 +9,7 @@
     />
     <title>Der Druckerstau</title>
 
-    <script src="./src/js/lib/bitty-editor/bitty.min.js"></script>
-    <script src="./src/js/lib/bitty-editor/plugins/highlight_active_line.js"></script>
+    <!-- CodeMirror 6 is imported as ESM in main.js -->
     <!-- <link rel="stylesheet" href="/style/codemirror_all.css" type="text/css"> -->
 
     <!-- Bootstrap 3 -->
@@ -586,10 +585,7 @@
                   <div class="col-md-12">
                     <div class="modal-errors"></div>
                     <div
-                      id="code-editor"
-                      class="bitty-editor"
-                      contenteditable="true"
-                      spellcheck="false"
+                      id="code-editor" class=""
                     ></div>
                   </div>
                 </div>
@@ -627,9 +623,6 @@
                     <div class="modal-errors"></div>
                     <div
                       id="code-editor-2"
-                      class="bitty-editor"
-                      contenteditable="true"
-                      spellcheck="false"
                     ></div>
                   </div>
                 </div>
@@ -673,9 +666,6 @@
                     <div class="modal-errors"></div>
                     <div
                       id="code-editor-3"
-                      class="bitty-editor"
-                      contenteditable="true"
-                      spellcheck="false"
                     ></div>
                   </div>
                 </div>
@@ -719,9 +709,6 @@
                     <div class="modal-errors"></div>
                     <div
                       id="history-code-editor"
-                      class="bitty-editor one"
-                      contenteditable="true"
-                      spellcheck="false"
                     ></div>
                   </div>
                 </div>
@@ -766,9 +753,6 @@
                     <div class="modal-errors"></div>
                     <div
                       id="gcode-editor"
-                      class="bitty-editor one"
-                      contenteditable="true"
-                      spellcheck="false"
                     ></div>
                   </div>
                 </div>

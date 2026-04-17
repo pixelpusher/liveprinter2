@@ -12,7 +12,13 @@ import * as gridlib from "gridlib";
 import { debug, setDoError } from "./logging-utils.js";
 import { buildEvaluateFunction, evalScope } from "./evaluate.mjs";
 import Sequence from "./Sequence.js";
-import * as math from "mathjs"; 
+import * as math from "mathjs";
+import { basicSetup, EditorView } from "codemirror";
+import { EditorState, Prec } from "@codemirror/state";
+import { javascript } from "@codemirror/lang-javascript";
+import { bracketMatching } from "@codemirror/language";
+import { oneDark } from "@codemirror/theme-one-dark";
+import { keymap } from "@codemirror/view";
 import {
   cleanGCode,
   Logger,
@@ -39,6 +45,97 @@ setDoError(guiError);
 
 let limiter = null; // limiter for async queue
 
+/**
+ * Create a lightweight CodeMirror editor for code editing
+ * @param {Object} config - Configuration object
+ * @param {string} config.id - Editor ID
+ * @param {string} config.value - Initial code value
+ * @param {HTMLElement} config.el - Parent element
+ * @param {Function} config.onRun - Callback when code should be executed
+ * @returns {Object} Editor object with value getter/setter and focus method
+ */
+function createCodeMirrorEditor(config) {
+  let lastSavedValue = config.value;
+
+  const state = EditorState.create({
+    doc: config.value,
+    extensions: [
+      basicSetup,
+      javascript(), 
+      oneDark, 
+      bracketMatching({ brackets: '()[]{}<>' }),
+      EditorView.updateListener.of((update) => {
+        // Save to localStorage on document changes
+        if (update.docChanged) {
+          const newValue = update.state.doc.toString();
+          if (newValue !== lastSavedValue) {
+            localStorage.setItem(config.id, newValue);
+            lastSavedValue = newValue;
+          }
+        }
+      }),
+      Prec.highest(
+        keymap.of([
+          {
+            key: 'Ctrl-Enter',
+            run: (editorView) => {
+              const selection = window.getSelection().toString();
+              const text = selection || editorView.state.doc.toString();
+              config.onRun(text, false);
+              return true;
+            },
+          },
+          {
+            key: 'Alt-Enter',
+            run: (editorView) => {
+              const selection = window.getSelection().toString();
+              const text = selection || editorView.state.doc.toString();
+              config.onRun(text, false);
+              return true;
+            },
+          },
+          {
+            key: 'Shift-Enter',
+            run: (editorView) => {
+              const selection = window.getSelection().toString();
+              if (selection) {
+                config.onRun(selection, true);
+              }
+              return true;
+            },
+          },
+        ])
+      ),
+    ],
+  });
+
+  const view = new EditorView({
+    state,
+    parent: config.el,
+  });
+
+  return {
+    view,
+    name: config.id,
+    get value() {
+      return view.state.doc.toString();
+    },
+    set value(text) {
+      // Replace the entire document
+      view.dispatch({
+        changes: {
+          from: 0,
+          to: view.state.doc.length,
+          insert: text,
+        },
+      });
+      lastSavedValue = text;
+    },
+    focus() {
+      view.focus();
+    },
+  };
+}
 globalThis.math = math; // make mathjs available globally
 globalThis.parser = math.parser(); // make parser available globally (see runCode)
 
@@ -396,59 +493,36 @@ export async function initEditors(lp, _limiter) {
 
   gridlib.onProgress(progressListener);
 
-  const CodeEditor = bitty.create({
-    flashColor: "black",
-    flashTime: 100,
+  // Create CodeMirror editors to replace bitty
+  const CodeEditor = createCodeMirrorEditor({
+    id: "CodeEditor",
     value: localStorage.getItem("CodeEditor") || loops,
     el: document.querySelector("#code-editor"),
-    rules: jsrules,
+    onRun: runCode,
   });
-  CodeEditor.name = "CodeEditor";
 
-  const CodeEditor2 = bitty.create({
-    flashColor: "black",
-    flashTime: 100,
+  const CodeEditor2 = createCodeMirrorEditor({
+    id: "CodeEditor2",
     value: localStorage.getItem("CodeEditor2") || shapesmix,
     el: document.querySelector("#code-editor-2"),
-    rules: jsrules,
+    onRun: runCode,
   });
-  CodeEditor2.name = "CodeEditor2";
 
-  const CodeEditor3 = bitty.create({
-    flashColor: "black",
-    flashTime: 100,
+  const CodeEditor3 = createCodeMirrorEditor({
+    id: "CodeEditor3",
     value: localStorage.getItem("CodeEditor3") || presetscode,
     el: document.querySelector("#code-editor-3"),
-    rules: jsrules,
+    onRun: runCode,
   });
-  CodeEditor3.name = "CodeEditor3";
 
-  HistoryCodeEditor = bitty.create({
-    flashColor: "black",
-    flashTime: 100,
+  HistoryCodeEditor = createCodeMirrorEditor({
+    id: "HistoryCodeEditor",
     value: localStorage.getItem("HistoryCodeEditor") || "CODE",
     el: document.querySelector("#history-code-editor"),
-    rules: jsrules,
+    onRun: runCode,
   });
-  HistoryCodeEditor.name = "HistoryCodeEditor";
 
   const editors = [CodeEditor, CodeEditor2, CodeEditor3, HistoryCodeEditor];
-
-  // map code evaluation
-  editors.map((v) => {
-    v.subscribe("run", runCode);
-    v.subscribe("keyup", async (e) => {
-      debug(`${v.name} key up: ${e.target.innerText}`);
-      localStorage.setItem(v.name, e.target.innerText);
-    });
-    v.keyManager.register('shift+Enter', async (e)=>{
-      e.preventDefault();
-      const txt = window.getSelection().getRangeAt( 0 ).toString();
-      console.log(`IMMEDIATE ${txt}`);
-      debug(`immediate mode code! ${txt}`);
-      await runCode(txt, true);
-    });
-  });
 
   ///----------------------------------------------------------
   ///------------Examples list---------------------------------
@@ -510,17 +584,17 @@ export async function initEditors(lp, _limiter) {
         minute: "2-digit",
       });
     await downloadFile(
-      CodeEditor.value(),
+      CodeEditor.value,
       "lp-editor-1-" + dateStr + ".js",
       "text/javascript"
     );
     await downloadFile(
-      CodeEditor2.value(),
+      CodeEditor2.value,
       "lp-editor-2-" + dateStr + ".js",
       "text/javascript"
     );
     await downloadFile(
-      CodeEditor3.value(),
+      CodeEditor3.value,
       "Presets-" + dateStr + ".js",
       "text/javascript"
     );
