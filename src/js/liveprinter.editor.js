@@ -26,7 +26,8 @@ import {
   bracketMatching, foldGutter, foldKeymap
 } from "@codemirror/language"
 import {
-  defaultKeymap, history, historyKeymap
+  defaultKeymap, history, historyKeymap,
+  indentWithTab
 } from "@codemirror/commands"
 import {
   searchKeymap, highlightSelectionMatches
@@ -163,6 +164,7 @@ function createCodeMirrorEditor(config) {
         ...completionKeymap,
         // Keys related to the linter system
         ...lintKeymap,
+        indentWithTab,
       ]),
       Prec.highest(keymap.of([
         {
@@ -445,6 +447,16 @@ function storageAvailable(type) {
       title: "The Printer Jam",
       delay: false,
       debug: false,
+      travelColor: 0xea44aa, travelOpacity: 0.8,
+      extrudeColor: 0xfaa044, extrudeOpacity: 0.9,
+      printHeadColor: 0xffbb55, printHeadRadius: 3,
+      fogEnabled: true, fogColor: 0x0f0f0f, fogNear: 5000, fogFar: 7800,
+      glowEnabled: true,
+      glowStrength: 2.0,
+      glowRadius: 0.4,
+      glowThreshold: 0.1,
+      travelLineGlow: 1.5,
+      extrudeLineGlow: 3.0,
     });
     
     
