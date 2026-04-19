@@ -13,8 +13,8 @@ import { debug, setDoError } from "./logging-utils.js";
 import { buildEvaluateFunction, evalScope } from "./evaluate.mjs";
 import Sequence from "./Sequence.js";
 import * as math from "mathjs";
-
-
+import { parseStrudel as uzu } from "lp-language";
+// CodeMirror 6
 import {EditorState, EditorSelection, Prec} from "@codemirror/state"
 import {
   EditorView, keymap, highlightSpecialChars, drawSelection,
@@ -64,20 +64,25 @@ setDoError(guiError);
 
 let limiter = null; // limiter for async queue
 
+/**
+* 
+* @param {EditorView} view 
+* @returns text of current line
+*/
 const selectLine = (view) => {
   // 1. Get the current cursor position
   const pos = view.state.selection.main.head;
-
+  
   // 2. Find the line corresponding to this position
   const line = view.state.doc.lineAt(pos);
-
+  
   // 3. Highlight the line visually
   view.dispatch({
     selection: EditorSelection.create([
       EditorSelection.range(line.from, line.to)
     ])
   });
-
+  
   // 4. Extract the text
   return line.text;
 };
@@ -114,7 +119,7 @@ function createCodeMirrorEditor(config) {
       // Re-indent lines when typing specific input
       indentOnInput(),
       // Highlight matching brackets near cursor
-      bracketMatching(),
+      bracketMatching({ brackets: '()[]{}<>'}),
       // Automatically close brackets
       closeBrackets(),
       // Load the autocompletion system
@@ -437,10 +442,30 @@ function storageAvailable(type) {
     
     // do the main thing we came here for
     const visualiser = makeVisualiser(lp, "visualiser", {
-      title: "LivePrinter2",
+      title: "The Printer Jam",
       delay: false,
       debug: false,
     });
+    
+    
+    /**
+     * Toggle sidebar with CTRL-H (capital H)
+     * @param {KeyboardEvent} event 
+     */
+    document.onkeydown = (event) =>{
+      
+      // this may have to be changed in FireFox using about:keyboard
+      if (event.ctrlKey && event.key == 'H')
+        {          
+        const inbox = document.getElementById('inbox');
+        if (inbox.style.display === "none") {
+          inbox.style.display = "block";
+        } else {
+          inbox.style.display = "none";
+        }
+      }
+      
+    };
     
     // grammardraw -----------------------------------
     /*
@@ -513,6 +538,7 @@ function storageAvailable(type) {
         numrange,
         info,
         guiError,
+        uzu,
         /**
         * @param {Number} d
         */

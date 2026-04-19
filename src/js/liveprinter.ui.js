@@ -52,7 +52,24 @@ import {
   onCodeQueued,
   onPosition,
 } from "./liveprinter.listeners.js";
-import { Limiter } from "tone";
+
+/**
+* Milliseconds to hours minutes seconds string
+* @param {Number} ms milliseconds 
+* @returns {String} hours:mins:sec
+*/
+function hms(ms) {
+  const s = Math.floor(ms / 1000);
+  const s_per_m = 60;
+  const s_per_h = s_per_m * 60;
+  const h = Math.floor(s / s_per_h);
+  const h_s = h * s_per_h;
+  const m_s = s - h_s;
+  const m = Math.floor(m_s / s_per_m);
+  const result = `${h}:${m}:${s - m * s_per_m}`;
+  return result;
+}
+
 
 export let infoListElement = "#info > ul"; // for logging info to GUI
 
@@ -83,6 +100,7 @@ export function updateGUI() {
   $("input[name='angle']").val(printer.angle.toFixed(4));
   $("input[name='speed']").val(printer.printspeed().toFixed(4));
   $("input[name='retract']").val(printer.currentRetraction.toFixed(4));
+  $("input[name='time']").val(hms(printer.time.toFixed(2)));
 }
 
 /**

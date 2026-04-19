@@ -30,7 +30,7 @@
     ></script>
   </head>
   <body>
-    <div class="lines"></div>
+    <!-- <div class="lines"></div> -->
     <div class="container" id="body">
       <div id="row">
         <div id="col-10"><div id="visualiser"></div></div>
@@ -250,7 +250,7 @@
             <div id="printer-info" class="col-md-12">
               <form>
                 <div class="row">
-                  <div class="col-md-2">
+                  <div class="col-md-1">
                     <div class="input-group input-group-sm mb-2">
                       <div class="input-group-prepend">
                         <span class="input-group-text" id="basic-addon-x"
@@ -267,7 +267,7 @@
                       />
                     </div>
                   </div>
-                  <div class="col-md-2">
+                  <div class="col-md-1">
                     <div class="input-group input-group-sm mb-2">
                       <div class="input-group-prepend">
                         <span class="input-group-text" id="basic-addon-y"
@@ -284,7 +284,7 @@
                       />
                     </div>
                   </div>
-                  <div class="col-md-2">
+                  <div class="col-md-1">
                     <div class="input-group input-group-sm mb-2">
                       <div class="input-group-prepend">
                         <span class="input-group-text" id="basic-addon-z"
@@ -301,7 +301,7 @@
                       />
                     </div>
                   </div>
-                  <div class="col-md-2">
+                  <div class="col-md-1">
                     <div class="input-group input-group-sm mb-2">
                       <div class="input-group-prepend">
                         <span class="input-group-text" id="basic-addon-e"
@@ -315,6 +315,23 @@
                         placeholder="0.00"
                         aria-label="e"
                         aria-describedby="basic-addon-e"
+                      />
+                    </div>
+                  </div>
+                  <div class="col-md-2">
+                    <div class="input-group input-group-sm mb-2">
+                      <div class="input-group-prepend">
+                        <span class="input-group-text" id="basic-addon-x"
+                          >time</span
+                        >
+                      </div>
+                      <input
+                        name="time"
+                        type="text"
+                        class="form-control form-control-sm"
+                        placeholder="0.00"
+                        aria-label="time"
+                        aria-describedby="basic-addon-time"
                       />
                     </div>
                   </div>
@@ -941,7 +958,7 @@
                 </div>
               </div>
             </div>
-            <div class="panel-r lines"></div>
+            <div class="panel-r"></div><!-- had lines class here-->
             <div class="panel-b-r"></div>
           </div>
         </div>
