@@ -1,26 +1,44 @@
 /**
- * Code editing functionality for LivePrinter.
- * @module Editor
- * @typicalname editor
- */
+* Code editing functionality for LivePrinter.
+* @module Editor
+* @typicalname editor
+*/
 
 /**
- * JQuery reference
- */
+* JQuery reference
+*/
 import $ from "jquery";
 import * as gridlib from "gridlib";
 import { debug, setDoError } from "./logging-utils.js";
 import { buildEvaluateFunction, evalScope } from "./evaluate.mjs";
 import Sequence from "./Sequence.js";
 import * as math from "mathjs";
-import { basicSetup, EditorView } from "codemirror";
-import { EditorState, Prec } from "@codemirror/state";
-import { javascript } from "@codemirror/lang-javascript";
-import { bracketMatching } from "@codemirror/language";
-import { oneDark } from "@codemirror/theme-one-dark";
-import { keymap } from "@codemirror/view";
+
+
+import {EditorState, EditorSelection, Prec} from "@codemirror/state"
 import {
-  cleanGCode,
+  EditorView, keymap, highlightSpecialChars, drawSelection,
+  highlightActiveLine, dropCursor, rectangularSelection,
+  crosshairCursor, lineNumbers, highlightActiveLineGutter
+} from "@codemirror/view"
+import {
+  indentOnInput,
+  bracketMatching, foldGutter, foldKeymap
+} from "@codemirror/language"
+import {
+  defaultKeymap, history, historyKeymap
+} from "@codemirror/commands"
+import {
+  searchKeymap, highlightSelectionMatches
+} from "@codemirror/search"
+import {
+  autocompletion, completionKeymap, closeBrackets,
+  closeBracketsKeymap
+} from "@codemirror/autocomplete"
+import {lintKeymap} from "@codemirror/lint"
+import { javascript } from "@codemirror/lang-javascript";
+import {
+  // cleanGCode,
   Logger,
   repeat,
   countto,
@@ -38,32 +56,83 @@ import { makeVisualiser } from "vizlib";
 import { transpile } from "lp-language";
 import { asyncFunctionsInAPIRegex } from "./constants/AsyncFunctionsConstants.js";
 import { shapesmix, presetscode, loops } from "./initialcode.js";
-const commentRegex = /\/\*[\s\S]*?\*\/|([^\\:]|^)\/\/.*$/gm; // https://stackoverflow.com/questions/5989315/regex-for-match-replacing-javascript-comments-both-multiline-and-inline/15123777#15123777
+import { lpDark } from "./lpDarkTheme.js";
+// const commentRegex = /\/\*[\s\S]*?\*\/|([^\\:]|^)\/\/.*$/gm; // https://stackoverflow.com/questions/5989315/regex-for-match-replacing-javascript-comments-both-multiline-and-inline/15123777#15123777
 const mathjsRegex = /(m\')(.*?)(\')/g; // matches mathjs function calls like m'sin(0.5)'
 
 setDoError(guiError);
 
 let limiter = null; // limiter for async queue
 
+const selectLine = (view) => {
+  // 1. Get the current cursor position
+  const pos = view.state.selection.main.head;
+
+  // 2. Find the line corresponding to this position
+  const line = view.state.doc.lineAt(pos);
+
+  // 3. Highlight the line visually
+  view.dispatch({
+    selection: EditorSelection.create([
+      EditorSelection.range(line.from, line.to)
+    ])
+  });
+
+  // 4. Extract the text
+  return line.text;
+};
+
 /**
- * Create a lightweight CodeMirror editor for code editing
- * @param {Object} config - Configuration object
- * @param {string} config.id - Editor ID
- * @param {string} config.value - Initial code value
- * @param {HTMLElement} config.el - Parent element
- * @param {Function} config.onRun - Callback when code should be executed
- * @returns {Object} Editor object with value getter/setter and focus method
- */
+* Create a lightweight CodeMirror editor for code editing
+* @param {Object} config - Configuration object
+* @param {string} config.id - Editor ID
+* @param {string} config.value - Initial code value
+* @param {HTMLElement} config.el - Parent element
+* @param {Function} config.onRun - Callback when code should be executed
+* @returns {Object} Editor object with value getter/setter and focus method
+*/
 function createCodeMirrorEditor(config) {
   let lastSavedValue = config.value;
-
+  
   const state = EditorState.create({
     doc: config.value,
     extensions: [
-      basicSetup,
+      // A line number gutter
+      lineNumbers(),
+      // A gutter with code folding markers
+      foldGutter(),
+      // Replace non-printable characters with placeholders
+      highlightSpecialChars(),
+      // The undo history
+      history(),
+      // Replace native cursor/selection with our own
+      drawSelection(),
+      // Show a drop cursor when dragging over the editor
+      dropCursor(),
+      // Allow multiple cursors/selections
+      EditorState.allowMultipleSelections.of(true),
+      // Re-indent lines when typing specific input
+      indentOnInput(),
+      // Highlight matching brackets near cursor
+      bracketMatching(),
+      // Automatically close brackets
+      closeBrackets(),
+      // Load the autocompletion system
+      autocompletion(),
+      // Allow alt-drag to select rectangular regions
+      rectangularSelection(),
+      // Change the cursor to a crosshair when holding alt
+      crosshairCursor(),
+      // Style the current line specially
+      highlightActiveLine(),
+      // Style the gutter for current line specially
+      highlightActiveLineGutter(),
+      // Highlight text that matches the selected text
+      highlightSelectionMatches(),
+      
       javascript(), 
-      oneDark, 
-      bracketMatching({ brackets: '()[]{}<>' }),
+      lpDark, 
+      // bracketMatching({ brackets: '()[]{}<>' }),
       EditorView.updateListener.of((update) => {
         // Save to localStorage on document changes
         if (update.docChanged) {
@@ -74,67 +143,81 @@ function createCodeMirrorEditor(config) {
           }
         }
       }),
-      Prec.highest(
-        keymap.of([
-          {
-            key: 'Ctrl-Enter',
-            run: (editorView) => {
-              const selection = window.getSelection().toString();
-              const text = selection || editorView.state.doc.toString();
-              config.onRun(text, false);
-              return true;
-            },
+      keymap.of([
+        // Closed-brackets aware backspace
+        ...closeBracketsKeymap,
+        // A large set of basic bindings
+        ...defaultKeymap,
+        // Search-related keys
+        ...searchKeymap,
+        // Redo/undo keys
+        ...historyKeymap,
+        // Code folding bindings
+        ...foldKeymap,
+        // Autocompletion keys
+        ...completionKeymap,
+        // Keys related to the linter system
+        ...lintKeymap,
+      ]),
+      Prec.highest(keymap.of([
+        {
+          key: 'Ctrl-Enter',
+          run: (editorView) => {
+            const selection = window.getSelection().toString();
+            const text = selection || selectLine(editorView);
+            config.onRun(text, false);
+            return true;
           },
-          {
-            key: 'Alt-Enter',
-            run: (editorView) => {
-              const selection = window.getSelection().toString();
-              const text = selection || editorView.state.doc.toString();
-              config.onRun(text, false);
-              return true;
-            },
-          },
-          {
-            key: 'Shift-Enter',
-            run: (editorView) => {
-              const selection = window.getSelection().toString();
-              if (selection) {
-                config.onRun(selection, true);
-              }
-              return true;
-            },
-          },
-        ])
-      ),
-    ],
-  });
-
-  const view = new EditorView({
-    state,
-    parent: config.el,
-  });
-
-  return {
-    view,
-    name: config.id,
-    get value() {
-      return view.state.doc.toString();
-    },
-    set value(text) {
-      // Replace the entire document
-      view.dispatch({
-        changes: {
-          from: 0,
-          to: view.state.doc.length,
-          insert: text,
         },
-      });
-      lastSavedValue = text;
-    },
-    focus() {
-      view.focus();
-    },
-  };
+        {
+          key: 'Alt-Enter',
+          run: (editorView) => {
+            const selection = window.getSelection().toString();
+            const text = selection || selectLine(editorView);
+            config.onRun(text, false);
+            return true;
+          },
+        },
+        {
+          key: 'Shift-Enter',
+          run: (editorView) => {
+            const selection = window.getSelection().toString();
+            const text = selection || selectLine(editorView);
+            config.onRun(text, true);
+            return true;
+          },
+        },
+      ])
+    ),
+  ],
+});
+
+const view = new EditorView({
+  state,
+  parent: config.el,
+});
+
+return {
+  view,
+  name: config.id,
+  get value() {
+    return view.state.doc.toString();
+  },
+  set value(text) {
+    // Replace the entire document
+    view.dispatch({
+      changes: {
+        from: 0,
+        to: view.state.doc.length,
+        insert: text,
+      },
+    });
+    lastSavedValue = text;
+  },
+  focus() {
+    view.focus();
+  },
+};
 }
 globalThis.math = math; // make mathjs available globally
 globalThis.parser = math.parser(); // make parser available globally (see runCode)
@@ -145,13 +228,13 @@ globalThis.parser = math.parser(); // make parser available globally (see runCod
 import { lp_functionMap as functionMap } from "grammardraw/modules/functionmaps.mjs";
 import { createESequence } from "grammardraw/modules/sequences";
 import {
-  setNoteMods,
-  setScales,
-  getBaseNoteDuration,
-  setBaseNoteDuration,
-  step,
-  on,
-  off,
+setNoteMods,
+setScales,
+getBaseNoteDuration,
+setBaseNoteDuration,
+step,
+on,
+off,
 } from "grammardraw/modules/fractalPath.mjs";
 
 /////-----------------------------------------------------------
@@ -163,56 +246,56 @@ globalThis.virtualmode = false; // when not connected to a printer
 let HistoryCodeEditor;
 
 /**
- * Log code log to history editor window of choice
- * @param {String} gcode
- *
- */
+* Log code log to history editor window of choice
+* @param {String} gcode
+*
+*/
 function recordCode(editor, code) {
   ///
   /// log code to code history window -------------------
   ///
-
+  
   // add comment with date and time
   const dateStr =
-    new Date().toLocaleString("en-US", {
-      hour12: false,
-      year: "numeric",
-      month: "2-digit",
-      day: "2-digit",
-      hour: "2-digit",
-      minute: "2-digit",
-      second: "2-digit",
-    }) + "\n";
-
+  new Date().toLocaleString("en-US", {
+    hour12: false,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+  }) + "\n";
+  
   const codeText = "//" + dateStr + "\n\n" + code + (code.endsWith("\n") ? "" : "\n" + "\n");
-
+  
   editor.value += codeText;
   //return [code,lastLine];
 }
 
 /**
- * Log GCode log to history window of choice
- * @param {Editor} editor
- * @param {Array | String} gcode
- */
+* Log GCode log to history window of choice
+* @param {Editor} editor
+* @param {Array | String} gcode
+*/
 
 function recordGCode(editor, gcode) {
   // add comment with date and time
   const dateStr =
-    new Date().toLocaleString("en-US", {
-      hour12: false,
-      year: "numeric",
-      month: "2-digit",
-      day: "2-digit",
-      hour: "2-digit",
-      minute: "2-digit",
-      second: "2-digit",
-    }) + "\n";
-
+  new Date().toLocaleString("en-US", {
+    hour12: false,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+  }) + "\n";
+  
   const gcodeArray = Array.isArray(gcode) ? gcode : [gcode];
   // ignore temperature or other info commands - no need to save these!
   const usefulGCode = gcodeArray.filter((_gcode) => !/M114|M105/.test(_gcode));
-
+  
   const doc = editor.getDoc();
   let line = doc.lastLine();
   const pos = {
@@ -225,31 +308,31 @@ function recordGCode(editor, gcode) {
   let newpos = { line: doc.lastLine(), ch: doc.getLine(line).length };
   editor.setSelection(pos, newpos);
   editor.scrollIntoView(newpos);
-
+  
   return usefulGCode;
 }
 
 
 function preprocess(code) {
-    code = code.replaceAll(mathjsRegex,  "parser.evaluate('$2')");
-
-    debug("code before pre-preprocessing-------------------------------");
-    debug(code);
-    debug("========================= -------------------------------");
-    return code;
-  }
+  code = code.replaceAll(mathjsRegex,  "parser.evaluate('$2')");
+  
+  debug("code before pre-preprocessing-------------------------------");
+  debug(code);
+  debug("========================= -------------------------------");
+  return code;
+}
 
 /**
- * This function takes the highlighted "local" code from the editor and runs the compiling and error-checking functions.
- * @param {String} code
- * @param {Boolean} immediate If true, run immediately, otherwise schedule to run
- * @returns {Boolean} success
- */
+* This function takes the highlighted "local" code from the editor and runs the compiling and error-checking functions.
+* @param {String} code
+* @param {Boolean} immediate If true, run immediately, otherwise schedule to run
+* @returns {Boolean} success
+*/
 async function runCode(code, immediate = false) {
   let result = false;
-
+  
   clearError();
-
+  
   // if printer isn't connected, we shouldn't run!
   const printerConnected = $("#header").hasClass("blinkgreen");
   if (!globalThis.virtualmode && !printerConnected) {
@@ -265,18 +348,18 @@ async function runCode(code, immediate = false) {
     } else {
       recordCode(HistoryCodeEditor,code);
     }
-
+    
     clearError();
-
+    
     code = preprocess(code)
-
+    
     try {
       const results = await buildEvaluateFunction(code, transpile);
       const resultFunction = results.result;
       debug(
         `Evaluated code[immediate]: ${JSON.stringify(results.code, null, 2)}`
       );
-
+      
       if (immediate) {
         try 
         {result = resultFunction();}
@@ -287,7 +370,7 @@ async function runCode(code, immediate = false) {
       } else {
         result = limiter.schedule(() => resultFunction());
       }
-
+      
       // blink the form
       blinkElem($("form"));
     } catch (err) {
@@ -302,16 +385,16 @@ async function runCode(code, immediate = false) {
 ///////////////////////////////////////////////////////////////////////////////////////////////
 
 /**
- * Local Storage for saving/loading documents.
- * Default behaviour is loading the last edited session.
- * @param {String} type type (global key in window object) for storage object
- * @returns {Boolean} true or false, if storage is available
- * @see https://developer.mozilla.org/en-US/docs/Web/API/Web_Storage_API/Using_the_Web_Storage_API
- */
+* Local Storage for saving/loading documents.
+* Default behaviour is loading the last edited session.
+* @param {String} type type (global key in window object) for storage object
+* @returns {Boolean} true or false, if storage is available
+* @see https://developer.mozilla.org/en-US/docs/Web/API/Web_Storage_API/Using_the_Web_Storage_API
+*/
 function storageAvailable(type) {
   try {
     const storage = window[type],
-      x = "__storage_test__";
+    x = "__storage_test__";
     storage.setItem(x, x);
     storage.removeItem(x);
     return true;
@@ -327,75 +410,75 @@ function storageAvailable(type) {
         e.name === "QuotaExceededError" ||
         // Firefox
         e.name === "NS_ERROR_DOM_QUOTA_REACHED") &&
-      // acknowledge QuotaExceededError only if there's something already stored
-      storage.length !== 0
-    );
+        // acknowledge QuotaExceededError only if there's something already stored
+        storage.length !== 0
+      );
+    }
   }
-}
-
-const bittyRegEx =
+  
+  const bittyRegEx =
   /\b(global|new|if|else|do|while|switch|for|of|continue|break|return|typeof|function|var|const|let|\.length)(?=[^\w])/;
-
-/**
- * Initialise editors and events, etc.
- * @returns {PromiseFulfilledResult}
- */
-export async function initEditors(lp, _limiter) {
-
-  limiter = _limiter;
-
-  const jsrules = {
-    comments: /(\/\/.*)/g,
-    keywords: bittyRegEx,
-    lp: asyncFunctionsInAPIRegex,
-    numbers: /\b(\d+)/g,
-    strings: /(".*?"|'.*?'|\`.*?\`)/g,
-  };
-
-  // do the main thing we came here for
-  const visualiser = makeVisualiser(lp, "visualiser", {
-    title: "LivePrinter2",
-    delay: false,
-    debug: false,
-  });
-
-  // grammardraw -----------------------------------
-  /*
-  const listener = {
+  
+  /**
+  * Initialise editors and events, etc.
+  * @returns {PromiseFulfilledResult}
+  */
+  export async function initEditors(lp, _limiter) {
+    
+    limiter = _limiter;
+    
+    const jsrules = {
+      comments: /(\/\/.*)/g,
+      keywords: bittyRegEx,
+      lp: asyncFunctionsInAPIRegex,
+      numbers: /\b(\d+)/g,
+      strings: /(".*?"|'.*?'|\`.*?\`)/g,
+    };
+    
+    // do the main thing we came here for
+    const visualiser = makeVisualiser(lp, "visualiser", {
+      title: "LivePrinter2",
+      delay: false,
+      debug: false,
+    });
+    
+    // grammardraw -----------------------------------
+    /*
+    const listener = {
     step: (v) => loginfo(`step event: ${v}`),
     action: ({
-      noteString,
-      noteMidi,
-      noteSpeed,
-      notesPlayed,
-      noteDuration,
-      noteDist,
-      currentTotalDuration,
-      totalSequenceDuration,
-      moved,
+    noteString,
+    noteMidi,
+    noteSpeed,
+    notesPlayed,
+    noteDuration,
+    noteDist,
+    currentTotalDuration,
+    totalSequenceDuration,
+    moved,
     }) => {
       loginfo(`action: ${noteMidi},${noteSpeed},${notesPlayed},${noteDuration},${noteDist},
-               ${currentTotalDuration}, 
-               ${totalSequenceDuration},
-               ${moved}}`);
-      //    document.getElementById('cur-time').innerHTML = `${currentTotalDuration}s`;
-      //    document.getElementById('note-string').innerHTML = `${noteString}`;
+    ${currentTotalDuration}, 
+    ${totalSequenceDuration},
+    ${moved}}`);
+    //    document.getElementById('cur-time').innerHTML = `${currentTotalDuration}s`;
+    //    document.getElementById('note-string').innerHTML = `${noteString}`;
     },
     done: (v) => {
       animating = false;
-      loginfo(`done event: ${v}`);
-      // ???
-      // cancelAnimationFrame(animationFrameHandle);
+    loginfo(`done event: ${v}`);
+    // ???
+    // cancelAnimationFrame(animationFrameHandle);
     },
-  };
-
-  const midi = Note.midi;
-  const transpose = Note.transpose;
-
-  // Note.midi("A4"); // => 60
-  // Note.transpose("C4", "5P"); // => "G4"
-
-  const grammarlib = {
+    };
+    
+    const midi = Note.midi;
+    const transpose = Note.transpose;
+    
+    // Note.midi("A4"); // => 60
+    // Note.transpose("C4", "5P"); // => "G4"
+    
+    const grammarlib = {
     functionMap,
     createESequence,
     setNoteMods,
@@ -407,53 +490,53 @@ export async function initEditors(lp, _limiter) {
     off,
     midi,
     transpose
-  };
-
-  // setup listeners
-
-  for (let eventName in listener) {
+    };
+    
+    // setup listeners
+    
+    for (let eventName in listener) {
     on(eventName, listener[eventName]);
-  }
-*/
-
-  // set up global module and function references
-  //evalScope({ lp, gridlib, visualiser, Logger, grammarlib });
-
-  evalScope(
-    {
-      log: Logger.info,
-      updateGUI,
-      printer: lp,
-      lp,
-      repeat,
-      countto,
-      numrange,
-      info,
-      guiError,
-      /**
-       * @param {Number} d
-       */
-      delay(d) {visualiser.vizevents.delay = d;},
-      seq:Sequence
-    },
-    visualiser,
-    gridlib
-  );
-
-  const shapeProgressElem = document.getElementById("shape-progress");
-  const timelineProgressElem = document.getElementById("timeline-progress");
-
-  const totalbars = 25;
-
-  // get progress
-  const progressListener = (event) => {
-    switch (event.type) {
-      case "shape":
+    }
+    */
+    
+    // set up global module and function references
+    //evalScope({ lp, gridlib, visualiser, Logger, grammarlib });
+    
+    evalScope(
+      {
+        log: Logger.info,
+        updateGUI,
+        printer: lp,
+        lp,
+        repeat,
+        countto,
+        numrange,
+        info,
+        guiError,
+        /**
+        * @param {Number} d
+        */
+        delay(d) {visualiser.vizevents.delay = d;},
+        seq:Sequence
+      },
+      visualiser,
+      gridlib
+    );
+    
+    const shapeProgressElem = document.getElementById("shape-progress");
+    const timelineProgressElem = document.getElementById("timeline-progress");
+    
+    const totalbars = 25;
+    
+    // get progress
+    const progressListener = (event) => {
+      switch (event.type) {
+        case "shape":
         const bars =
-          Math.floor(
-            totalbars *
-            event.it.current.i / (event.it.points * event.it.totallayers)
-          );
+        Math.floor(
+          totalbars *
+          event.it.current.i / (event.it.points * event.it.totallayers)
+        );
         let str = "";
         for (let i = 0; i < bars; i++) {
           str += "-";
@@ -463,8 +546,8 @@ export async function initEditors(lp, _limiter) {
         }
         shapeProgressElem.innerHTML = str;
         break;
-
-      case "timeline":
+        
+        case "timeline":
         if (event.progress) {
           const bars = totalbars * parseFloat(event.progress);
           let str = "[t]";
@@ -487,57 +570,57 @@ export async function initEditors(lp, _limiter) {
           timelineProgressElem.innerHTML = str;
         }
         break;
-    }
-    // console.info(event);
-  };
-
-  gridlib.onProgress(progressListener);
-
-  // Create CodeMirror editors to replace bitty
-  const CodeEditor = createCodeMirrorEditor({
-    id: "CodeEditor",
-    value: localStorage.getItem("CodeEditor") || loops,
-    el: document.querySelector("#code-editor"),
-    onRun: runCode,
-  });
-
-  const CodeEditor2 = createCodeMirrorEditor({
-    id: "CodeEditor2",
-    value: localStorage.getItem("CodeEditor2") || shapesmix,
-    el: document.querySelector("#code-editor-2"),
-    onRun: runCode,
-  });
-
-  const CodeEditor3 = createCodeMirrorEditor({
-    id: "CodeEditor3",
-    value: localStorage.getItem("CodeEditor3") || presetscode,
-    el: document.querySelector("#code-editor-3"),
-    onRun: runCode,
-  });
-
-  HistoryCodeEditor = createCodeMirrorEditor({
-    id: "HistoryCodeEditor",
-    value: localStorage.getItem("HistoryCodeEditor") || "CODE",
-    el: document.querySelector("#history-code-editor"),
-    onRun: runCode,
-  });
-
-  const editors = [CodeEditor, CodeEditor2, CodeEditor3, HistoryCodeEditor];
-
-  ///----------------------------------------------------------
-  ///------------Examples list---------------------------------
-  ///----------------------------------------------------------
-
-  let exList = $("#examples-list > .dropdown-item").not("[id*='session']");
-  exList.on("click", async function () {
-    const me = $(this);
-    const filename = me.data("link");
-    clearError(); // clear loading errors
-    $.ajax({ url: filename, dataType: "text" })
+      }
+      // console.info(event);
+    };
+    
+    gridlib.onProgress(progressListener);
+    
+    // Create CodeMirror editors to replace bitty
+    const CodeEditor = createCodeMirrorEditor({
+      id: "CodeEditor",
+      value: localStorage.getItem("CodeEditor") || loops,
+      el: document.querySelector("#code-editor"),
+      onRun: runCode,
+    });
+    
+    const CodeEditor2 = createCodeMirrorEditor({
+      id: "CodeEditor2",
+      value: localStorage.getItem("CodeEditor2") || shapesmix,
+      el: document.querySelector("#code-editor-2"),
+      onRun: runCode,
+    });
+    
+    const CodeEditor3 = createCodeMirrorEditor({
+      id: "CodeEditor3",
+      value: localStorage.getItem("CodeEditor3") || presetscode,
+      el: document.querySelector("#code-editor-3"),
+      onRun: runCode,
+    });
+    
+    HistoryCodeEditor = createCodeMirrorEditor({
+      id: "HistoryCodeEditor",
+      value: localStorage.getItem("HistoryCodeEditor") || "CODE",
+      el: document.querySelector("#history-code-editor"),
+      onRun: runCode,
+    });
+    
+    const editors = [CodeEditor, CodeEditor2, CodeEditor3, HistoryCodeEditor];
+    
+    ///----------------------------------------------------------
+    ///------------Examples list---------------------------------
+    ///----------------------------------------------------------
+    
+    let exList = $("#examples-list > .dropdown-item").not("[id*='session']");
+    exList.on("click", async function () {
+      const me = $(this);
+      const filename = me.data("link");
+      clearError(); // clear loading errors
+      $.ajax({ url: filename, dataType: "text" })
       .done(function (content) {
         // const newDoc = CodeMirror.Doc(content, "lp");
         // blinkElem($(".CodeMirror"), "slow", () => {
-        //     CodeEditor.swapDoc(newDoc);
+          //     CodeEditor.swapDoc(newDoc);
         //     CodeEditor.refresh();
         //     CodeEditor.on('changes', () => handleChanges(CodeEditor));
         //     CodeEditor.on('blur', () => handleChanges(CodeEditor));
@@ -546,34 +629,34 @@ export async function initEditors(lp, _limiter) {
       .fail(function () {
         guiError({ name: "error", message: "file load error:" + filename });
       });
-  });
-
-  ///----------------------------------------------------------
-  ///------------GUI events------------------------------------
-  ///----------------------------------------------------------
-
-  $('a[data-toggle="pill"]').on("shown.bs.tab", function (e) {
-    const target = $(e.target).attr("href"); // activated tab
-    if (target === "#history-code-editor-area") {
-      //HistoryCodeEditor.refresh();
-      //setLanguageMode(); // have to update gutter, etc.
-      clearError();
-    } else if (target === "#code-editor-area") {
-      //CodeEditor.refresh();
-      //setTimeout(setLanguageMode, 1000); // have to update gutter, etc.
-      clearError();
-    } else if (target === "#gcode-editor-area") {
-      // visualiser
-    }
-  });
-
-  /// extra compile button
-  $("#sendCode").on("click", runCode);
-
-  /// download all code
-  $(".btn-download").on("click", async () => {
-    // add comment with date and time
-    const dateStr =
+    });
+    
+    ///----------------------------------------------------------
+    ///------------GUI events------------------------------------
+    ///----------------------------------------------------------
+    
+    $('a[data-toggle="pill"]').on("shown.bs.tab", function (e) {
+      const target = $(e.target).attr("href"); // activated tab
+      if (target === "#history-code-editor-area") {
+        //HistoryCodeEditor.refresh();
+        //setLanguageMode(); // have to update gutter, etc.
+        clearError();
+      } else if (target === "#code-editor-area") {
+        //CodeEditor.refresh();
+        //setTimeout(setLanguageMode, 1000); // have to update gutter, etc.
+        clearError();
+      } else if (target === "#gcode-editor-area") {
+        // visualiser
+      }
+    });
+    
+    /// extra compile button
+    $("#sendCode").on("click", runCode);
+    
+    /// download all code
+    $(".btn-download").on("click", async () => {
+      // add comment with date and time
+      const dateStr =
       "_" +
       new Date().toLocaleString("en-US", {
         hour12: false,
@@ -583,34 +666,35 @@ export async function initEditors(lp, _limiter) {
         hour: "2-digit",
         minute: "2-digit",
       });
-    await downloadFile(
-      CodeEditor.value,
-      "lp-editor-1-" + dateStr + ".js",
-      "text/javascript"
-    );
-    await downloadFile(
-      CodeEditor2.value,
-      "lp-editor-2-" + dateStr + ".js",
-      "text/javascript"
-    );
-    await downloadFile(
-      CodeEditor3.value,
-      "Presets-" + dateStr + ".js",
-      "text/javascript"
-    );
-  });
-
-  // // set up events
-  // editors.map(cm => cm.on("changes", (cm) => handleChanges(cm)));
-  // editors.map(cm => cm.on("blur", (cm) => handleChanges(cm)));
-
-  // if (storageAvailable('localStorage')) {
-  //     // finally, load the last stored session:
-  //     editors.map(cm => reloadSession(cm));
-  // }
-  // else {
-  //     doError({ name: "save error", message: "no local storage available for saving files!" });
-  // }
-
-  return;
-}
+      await downloadFile(
+        CodeEditor.value,
+        "lp-editor-1-" + dateStr + ".js",
+        "text/javascript"
+      );
+      await downloadFile(
+        CodeEditor2.value,
+        "lp-editor-2-" + dateStr + ".js",
+        "text/javascript"
+      );
+      await downloadFile(
+        CodeEditor3.value,
+        "Presets-" + dateStr + ".js",
+        "text/javascript"
+      );
+    });
+    
+    // // set up events
+    // editors.map(cm => cm.on("changes", (cm) => handleChanges(cm)));
+    // editors.map(cm => cm.on("blur", (cm) => handleChanges(cm)));
+    
+    // if (storageAvailable('localStorage')) {
+    //     // finally, load the last stored session:
+    //     editors.map(cm => reloadSession(cm));
+    // }
+    // else {
+      //     doError({ name: "save error", message: "no local storage available for saving files!" });
+    // }
+    
+    return;
+  }
+  
