@@ -423,9 +423,7 @@ function storageAvailable(type) {
     }
   }
   
-  const bittyRegEx =
-  /\b(global|new|if|else|do|while|switch|for|of|continue|break|return|typeof|function|var|const|let|\.length)(?=[^\w])/;
-  
+
   /**
   * Initialise editors and events, etc.
   * @returns {PromiseFulfilledResult}
@@ -433,14 +431,6 @@ function storageAvailable(type) {
   export async function initEditors(lp, _limiter) {
     
     limiter = _limiter;
-    
-    const jsrules = {
-      comments: /(\/\/.*)/g,
-      keywords: bittyRegEx,
-      lp: asyncFunctionsInAPIRegex,
-      numbers: /\b(\d+)/g,
-      strings: /(".*?"|'.*?'|\`.*?\`)/g,
-    };
     
     // do the main thing we came here for
     const visualiser = makeVisualiser(lp, "visualiser", {
@@ -478,72 +468,13 @@ function storageAvailable(type) {
       }
       
     };
-    
-    // grammardraw -----------------------------------
-    /*
-    const listener = {
-    step: (v) => loginfo(`step event: ${v}`),
-    action: ({
-    noteString,
-    noteMidi,
-    noteSpeed,
-    notesPlayed,
-    noteDuration,
-    noteDist,
-    currentTotalDuration,
-    totalSequenceDuration,
-    moved,
-    }) => {
-      loginfo(`action: ${noteMidi},${noteSpeed},${notesPlayed},${noteDuration},${noteDist},
-    ${currentTotalDuration}, 
-    ${totalSequenceDuration},
-    ${moved}}`);
-    //    document.getElementById('cur-time').innerHTML = `${currentTotalDuration}s`;
-    //    document.getElementById('note-string').innerHTML = `${noteString}`;
-    },
-    done: (v) => {
-      animating = false;
-    loginfo(`done event: ${v}`);
-    // ???
-    // cancelAnimationFrame(animationFrameHandle);
-    },
-    };
-    
-    const midi = Note.midi;
-    const transpose = Note.transpose;
-    
-    // Note.midi("A4"); // => 60
-    // Note.transpose("C4", "5P"); // => "G4"
-    
-    const grammarlib = {
-    functionMap,
-    createESequence,
-    setNoteMods,
-    setScales,
-    getBaseNoteDuration,
-    setBaseNoteDuration,
-    step,
-    on,
-    off,
-    midi,
-    transpose
-    };
-    
-    // setup listeners
-    
-    for (let eventName in listener) {
-    on(eventName, listener[eventName]);
-    }
-    */
-    
-    // set up global module and function references
-    //evalScope({ lp, gridlib, visualiser, Logger, grammarlib });
-    
+  
+    // add libraries, object namespaces, etc. to compilation environment (see @runCode)  
     evalScope(
       {
         log: Logger.info,
         updateGUI,
-        printer: lp,
+        printer: lp, // alias for lp, bit more descriptive
         lp,
         repeat,
         countto,
@@ -551,10 +482,7 @@ function storageAvailable(type) {
         info,
         guiError,
         uzu,
-        /**
-        * @param {Number} d
-        */
-        delay(d) {visualiser.vizevents.delay = d;},
+        delay(d) {visualiser.vizevents.delay = d;}, // delay for visualiser, hacky
         seq:Sequence
       },
       visualiser,
