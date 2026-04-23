@@ -370,8 +370,13 @@ export const portsListHandler = function (event) {
       console.log(`serial port btn clicked ${me}`);
 
       info('INIT SOUND');
-      await initSound(printer);
-
+      try
+      { 
+        await initSound(printer);
+      }
+      catch(err) {
+        logerror(`Error initializing sound: ${err}`);
+      }
       info("opening serial port " + me.html());
       const baudRate = $("#baudrates-list .active").data("rate");
 
@@ -852,11 +857,11 @@ export async function initUI(_printer, _limiter, _scheduler) {
   setLogPrinterState(printerStateHandler);
 
   //TEST -- remove this
-  console.error(
-    MarlinLineParserResultPosition.parse(
-      "X:10.00 Y:10.00 Z:30.00 E:0.00 Count X:1040 Y:1000 Z:12000"
-    )
-  );
+  // console.error(
+  //   MarlinLineParserResultPosition.parse(
+  //     "X:10.00 Y:10.00 Z:30.00 E:0.00 Count X:1040 Y:1000 Z:12000"
+  //   )
+  // );
 
   if (!_printer) {
     logerror("FATAL error: no liveprinter object in gui init()!");
