@@ -1,3 +1,4 @@
+import { updateGUI } from "../liveprinter.ui";
 
 /**
 * Iterates the L-system based on the axiom and rules.
@@ -53,21 +54,23 @@ export const drawCommands = async function ({commandsIter, melody, angleMap}) {
   switch (nextCommand.value) {
     case 'F':
     case 'A':
-      info('F or A');
+      //info('F or A');
     if (note == "-" || note == "0") {
       await printer.wait(duration);
       // console.log("done waiting");
+      updateGUI();
       return;
     }
     
     printer.speed(note);
     
     await printer.drawtime(duration);
+    updateGUI();
     break;
     
     case '+':
     case '-':
-      info('+ or_');
+      //info('+ or_');
     if (angleMap[nextCommand.value] !== undefined) {
       // Apply bespoke angles mapped to this character
       await printer.turn(angleMap[nextCommand.value]);
