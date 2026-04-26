@@ -57,7 +57,7 @@ import { makeVisualiser } from "vizlib";
 import { transpile } from "lp-language";
 import { shapesmix, presetscode, loops } from "./initialcode.js";
 import { iterateLSystem, makeCommands, drawCommands } from "./tpj/lsystems.js";
-import { lpDark } from "./lpDarkTheme.js";
+import { lpDark } from "./lpDarkTheme.ts";
 // const commentRegex = /\/\*[\s\S]*?\*\/|([^\\:]|^)\/\/.*$/gm; // https://stackoverflow.com/questions/5989315/regex-for-match-replacing-javascript-comments-both-multiline-and-inline/15123777#15123777
 const mathjsRegex = /(m\')(.*?)(\')/g; // matches mathjs function calls like m'sin(0.5)'
 
