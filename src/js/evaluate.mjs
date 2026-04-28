@@ -8,6 +8,11 @@ import { guiError } from "./liveprinter.ui";
 
 const AsyncFunction = async function () {}.constructor;
 
+/**
+ * Build the scope for running evalated functions by importing them into globalThis namespace (onyl need to do this once)
+ * @param  {...any} args List of modules (variables) to import into globalThis namespace for use in the evaluated function
+ * @returns {Array} List of modules
+ */
 export const evalScope = async (...args) => {
   const results = await Promise.allSettled(args);
   const modules = results
@@ -17,7 +22,7 @@ export const evalScope = async (...args) => {
     if (result.status === "rejected") {
       console.warn(
         `evalScope: module with index ${i} could not be loaded:`,
-        result.reason
+        result.reason,
       );
     }
   });
@@ -32,60 +37,55 @@ export const evalScope = async (...args) => {
   return modules;
 };
 
-function safeEvalFunction(str, options = {}) {
-  const { wrapExpression = true, wrapAsync = true } = options;
-  if (wrapExpression) {
-    str = `{${str}}`; // reset bail
-  }
-  if (str[str.length - 1] !== ";") {
-    str += ";"; // ensure it ends with a semicolon
-  }
-  if (wrapAsync) {
-    str = `try 
-    {
-      return (async ()=>
-        {
-          lp.bail(false);
-            ${str}
-          return true;
-        })();
-    } catch (err) {
-      guiError(err); 
-      return false;
-    }`;
+/**
+ * Safely (?) builds a new function from the code given in the code argument
+ * @param {String} code 
+ * @returns {Function} async function to run
+ */
+function safeEvalFunction(code) {
+  if (code == undefined || code == null || typeof code != "string") {
+    throw new SyntaxError(
+      `safeEvalFunction::string to evaluate is not a string or not included [${code}]`,
+    );
   }
 
-
-  //console.log(\"ERROR in wrapped function [transpilation]: ${str.replaceAll(/'|"/gm, "\"")}\");
+  if (code[code.length - 1] !== ";") {
+    code += ";"; // ensure it ends with a semicolon
+  }  
 
   // remove all unescaped newlines
-  const body = `"use strict";${str}`.replaceAll(/\r?\n|\r/gm, "");
+  const body = `"use strict";${code}`.replaceAll(/\r?\n|\r/gm, "");
 
   let result = new AsyncFunction(`"use strict";return false`);
   try {
     result = new AsyncFunction(body);
   } catch (err) {
-      // `Error creating new function: ${
-      //   typeof err == "string" ? err : JSON.stringify(err, null, 2)
-      // }`
-    guiError( err  );
+    // `Error creating new function: ${
+    //   typeof err == "string" ? err : JSON.stringify(err, null, 2)
+    // }`
+    guiError(err);
   }
 
   return result;
 }
-
+/**
+ * Transpile code and return results for later use (evaluated function object and transpiled code)
+ * @param {String} code Code to transpile and turn into an AsyncFunction object for later use
+ * @param {Object} transpiler Transpiler object
+ * @param {Object} transpilerOptions Options for transpiler
+ * @returns {Object} Returns object of the form: { mode: "javascript", result: AsyncFunction, code: "transpiled code" }
+ */
 export async function buildEvaluateFunction(
   code,
   transpiler,
-  transpilerOptions
+  transpilerOptions,
 ) {
-  let newcode = code;
-  let result = { mode: "javascript", result: null, code: newcode };
+  const result = { mode: "javascript", result: null, code };
   try {
     if (transpiler) {
       // transform liveprinter grammar and javascript mix into javascript code
       const transpiled = transpiler(code, transpilerOptions);
-      newcode = transpiled;
+      result.newcode = transpiled;
     }
   } catch (terr) {
     guiError(`transpile error: ${terr}`);
@@ -93,11 +93,11 @@ export async function buildEvaluateFunction(
   // if no transpiler is given, we expect a single instruction (!wrapExpression)
   const options = { wrapExpression: !transpiler };
   try {
-    const evaluateFunction = safeEvalFunction(newcode, options);
+    const evaluateFunction = safeEvalFunction(result.newcode, options);
     result.result = evaluateFunction;
   } catch (err) {
     console.log(
-      `ERROR evaluating transpiled code ${JSON.stringify(err, null, 2)}`
+      `ERROR evaluating transpiled code ${JSON.stringify(err, null, 2)}`,
     );
     guiError(err);
   }

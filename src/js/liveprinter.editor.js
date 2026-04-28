@@ -9,7 +9,7 @@
 */
 import $ from "jquery";
 import * as gridlib from "gridlib";
-import { debug, setDoError } from "./logging-utils.js";
+import { setDoError, doError, debug, logError, logInfo } from "./logging-utils.js";
 import { buildEvaluateFunction, evalScope } from "./evaluate.mjs";
 import Sequence from "./Sequence.js";
 import * as math from "mathjs";
@@ -226,31 +226,27 @@ return {
   },
 };
 }
+
+// global variables
 globalThis.math = math; // make mathjs available globally
 globalThis.parser = math.parser(); // make parser available globally (see runCode)
-
-/////-----------------------------------------------------------
-/////------grammardraw fractals---------------------------------
-/*
-import { lp_functionMap as functionMap } from "grammardraw/modules/functionmaps.mjs";
-import { createESequence } from "grammardraw/modules/sequences";
-import {
-setNoteMods,
-setScales,
-getBaseNoteDuration,
-setBaseNoteDuration,
-step,
-on,
-off,
-} from "grammardraw/modules/fractalPath.mjs";
-
-/////-----------------------------------------------------------
-/////------grammardraw fractals---------------------------------
-*/
-
 globalThis.virtualmode = false; // when not connected to a printer
 
+
 let HistoryCodeEditor;
+
+
+// Hack to catch ALL errors in the interactive editor that might slip through because of forgotten await/catch() etc on async functions
+
+window.addEventListener('unhandledrejection', function(event) {
+
+  // Prevent the default browser console error
+  event.preventDefault();
+
+  // console.error("Unhandled promise (error in evaluated code?):", event);
+  guiError(event.reason);
+
+});
 
 /**
 * Log code log to history editor window of choice
@@ -369,7 +365,10 @@ async function runCode(code, immediate = false) {
       
       if (immediate) {
         try 
-        {result = resultFunction();}
+        {
+          // make sure to await or we can't catch errors like undeclaree variables in the function!
+          result = await resultFunction();
+        }
         catch(err)
         {
           guiError(err);
