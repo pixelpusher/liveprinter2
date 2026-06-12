@@ -69,13 +69,7 @@ const asyncCloseReplaceString = '\n\t});\n';
 
 let limiter = null; // limiter for async queue
 
-/**
- * Get date string for logging purposes
- */
-function getDateString() {
-  // add comment with date and time
-  return
-  new Date().toLocaleString("en-US", {
+const dateTimeFormat = new Intl.DateTimeFormat("en-GB", {
     hour12: false,
     year: "numeric",
     month: "2-digit",
@@ -84,7 +78,14 @@ function getDateString() {
     minute: "2-digit",
     second: "2-digit",
     fractionalSecondDigits: 3
-  }) + "\n";
+  });
+
+/**
+ * Get date string for logging purposes
+ */
+function getDateString() {
+  // add comment with date and time
+  return dateTimeFormat.format(new Date()) + "\n";
 }
 
 /**
@@ -284,7 +285,7 @@ function recordCode(editor, code) {
   // add comment with date and time
   const dateStr = getDateString();
   
-  const codeText = "//" + dateStr + "\n\n" + code + (code.endsWith("\n") ? "" : "\n" + "\n");
+  const codeText = "//" + dateStr + "\n" + code + (code.endsWith("\n") ? "" : "\n" + "\n");
   
   editor.value += codeText;
 }
@@ -661,7 +662,7 @@ function storageAvailable(type) {
       // add comment with date and time
       const dateStr =
       "_" + getDateString().trim();
-      
+
       await downloadFile(
         CodeEditor.value,
         "lp-editor-1-" + dateStr + ".js",
