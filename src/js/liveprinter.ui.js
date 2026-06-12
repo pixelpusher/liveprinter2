@@ -1,21 +1,21 @@
 /**
- * @file Main liveprinter system file for a livecoding system for live CNC manufacturing.
- * @author Evan Raskob <evanraskob+nosp4m@gmail.com>
- * @version 0.8
- * @license
- * Copyright (c) 2018 Evan Raskob and others
- * Licensed under the GNU Affero 3.0 License (the "License"); you may
- * not use this file except in compliance with the License. You may obtain
- * a copy of the License at
- *
- *     {@link https://www.gnu.org/licenses/gpl-3.0.en.html}
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
- * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
- * License for the specific language governing permissions and limitations
- * under the License.
- */
+* @file Main liveprinter system file for a livecoding system for live CNC manufacturing.
+* @author Evan Raskob <evanraskob+nosp4m@gmail.com>
+* @version 0.8
+* @license
+* Copyright (c) 2018 Evan Raskob and others
+* Licensed under the GNU Affero 3.0 License (the "License"); you may
+* not use this file except in compliance with the License. You may obtain
+* a copy of the License at
+*
+*     {@link https://www.gnu.org/licenses/gpl-3.0.en.html}
+*
+* Unless required by applicable law or agreed to in writing, software
+* distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+* WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+* License for the specific language governing permissions and limitations
+* under the License.
+*/
 import { Logger, Scheduler } from "liveprinter-utils";
 import $ from "jquery";
 
@@ -80,17 +80,17 @@ let printer = null; // liveprinter printer object
 let limiter = null; // limiting scheduler
 
 /**
- * convenience function for sending GCode and handling response in GUI -- should it go here?
- * @param {String or Array} gcode
- * @returns
- */
+* convenience function for sending GCode and handling response in GUI -- should it go here?
+* @param {String or Array} gcode
+* @returns
+*/
 export async function sendAndHandleGCode(gcode) {
   return handleGCodeResponse(await sendGCodeRPC(gcode));
 }
 
 /**
- * GUI utils
- */
+* GUI utils
+*/
 
 export function updateGUI() {
   $("input[name='x']").val(printer.x.toFixed(4));
@@ -104,8 +104,8 @@ export function updateGUI() {
 }
 
 /**
- * Clear HTML of all displayed code errors
- */
+* Clear HTML of all displayed code errors
+*/
 export function clearError() {
   $(".code-errors").html("<p>[no errors]</p>");
   $(".modal-errors").empty();
@@ -114,96 +114,96 @@ export function clearError() {
 let lastErrorTime = 0;
 
 /**
- * Show an error in the HTML GUI
- * @param {Error} e Standard JavaScript error object to show
- * @see https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/SyntaxError
- * @memberOf LivePrinter
- */
+* Show an error in the HTML GUI
+* @param {Error} e Standard JavaScript error object to show
+* @see https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/SyntaxError
+* @memberOf LivePrinter
+*/
 export function guiError(e) {
   // avoid repeated errors  
   const now = Date.now();
   if (now - lastErrorTime < 1000) {
     return;
   }
-
+  
   lastErrorTime = now;
-
+  
   // if (lastErrorMessage !== undefined && err.message !== lastErrorMessage) {
   //     lastErrorMessage = err.message;
-
+  
   if (typeof e !== "object") {
-
+    
     $(".code-errors").html(
-        "<p>" + e + "</p>"
-      );
-
+      "<p>" + e + "</p>"
+    );
+    
     $(".modal-errors").prepend(
       "<div class='alert alert-warning alert-dismissible fade show' role='alert'>" +
-        '<em>PRINTER JAMMED!</em> '
+      '<em>PRINTER JAMMED!</em> '
       +
-        e +
-        '<button type="button" class="close" data-dismiss="alert" aria-label="Close">' +
-        '<span aria-hidden="true">&times;</span></button>' +
-        "</div>"
+      e +
+      '<button type="button" class="close" data-dismiss="alert" aria-label="Close">' +
+      '<span aria-hidden="true">&times;</span></button>' +
+      "</div>"
     );
-
+    
   } else {
     let err = e;
     if (e.error !== undefined) err = e.error;
     const lineNumber = err.lineNumber == null ? -1 : e.lineNumber;
-
+    
     // report to user
     $(".code-errors").html(
       "<p>" + err.name + ": " + err.message + " (line:" + lineNumber + ")</p>"
     );
-
+    
     $(".modal-errors").prepend(
       "<div class='alert alert-warning alert-dismissible fade show' role='alert'>" +
       '<em>PRINTER JAMMED!</em> ' 
       +
-        err.name +
-        ": " +
-        err.message +
-        " (line:" +
-        lineNumber +
-        ")" +
-        '<button type="button" class="close" data-dismiss="alert" aria-label="Close">' +
-        '<span aria-hidden="true">&times;</span></button>' +
-        "</div>"
+      err.name +
+      ": " +
+      err.message +
+      " (line:" +
+      lineNumber +
+      ")" +
+      '<button type="button" class="close" data-dismiss="alert" aria-label="Close">' +
+      '<span aria-hidden="true">&times;</span></button>' +
+      "</div>"
     );
   }
   Logger.error(e);
 }
 
-  /*
-    Logger.debug("SyntaxError? " + (e instanceof SyntaxError)); // true
-    Logger.debug(e); // true
-    Logger.debug("SyntaxError? " + (e instanceof SyntaxError)); // true
-    Logger.debug("ReferenceError? " + (e instanceof ReferenceError)); // true
-    Logger.debug(e.message);                // "missing ; before statement"
-    Logger.debug(e.name);                   // "SyntaxError"
-    Logger.debug(e.fileName);               // "Scratchpad/1"
-    Logger.debug(e.lineNumber);             // 1
-    Logger.debug(e.columnNumber);           // 4
-    Logger.debug(e.stack);                  // "@Scratchpad/1:2:3\n"
-    */
+/*
+Logger.debug("SyntaxError? " + (e instanceof SyntaxError)); // true
+Logger.debug(e); // true
+Logger.debug("SyntaxError? " + (e instanceof SyntaxError)); // true
+Logger.debug("ReferenceError? " + (e instanceof ReferenceError)); // true
+Logger.debug(e.message);                // "missing ; before statement"
+Logger.debug(e.name);                   // "SyntaxError"
+Logger.debug(e.fileName);               // "Scratchpad/1"
+Logger.debug(e.lineNumber);             // 1
+Logger.debug(e.columnNumber);           // 4
+Logger.debug(e.stack);                  // "@Scratchpad/1:2:3\n"
+*/
 
-  // this sucked because of coding... jst highlight instead!
-  /*
-    if (e.lineNumber) {
-        // remember that syntax errors start at line 1 which is line 0 in CodeMirror!
-        CodeEditor.setSelection({ line: (e.lineNumber-1), ch: e.columnNumber }, { line: (e.lineNumber-1), ch: (e.columnNumber + 1) });
-    }
-    */
+// this sucked because of coding... jst highlight instead!
+/*
+if (e.lineNumber) {
+// remember that syntax errors start at line 1 which is line 0 in CodeMirror!
+CodeEditor.setSelection({ line: (e.lineNumber-1), ch: e.columnNumber }, { line: (e.lineNumber-1), ch: (e.columnNumber + 1) });
+}
+*/
 
 /**
- * Parse temperature response from printer firmware (Marlin)
- * @param {String} data serial response from printer firmware (Marlin)
- * @return {Boolean} true or false if parsed or not
- */
+* Parse temperature response from printer firmware (Marlin)
+* @param {String} data serial response from printer firmware (Marlin)
+* @return {Boolean} true or false if parsed or not
+*/
 export function tempHandler(result) {
   let handled = true;
-
+  
   // try classic format
   if (undefined !== result.hotend) {
     try {
@@ -211,7 +211,7 @@ export function tempHandler(result) {
       const target = parseFloat(result.hotend_target).toFixed(2);
       const tmpbed = parseFloat(result.bed).toFixed(2);
       const targetbed = parseFloat(result.bed_target).toFixed(2);
-
+      
       $("input[name='temphot']").val(target);
       $("input[name='tempbed']").val(targetbed);
       const $tt = $("input[name='temphot-target']")[0];
@@ -251,9 +251,9 @@ export function tempHandler(result) {
 }
 
 /**
- * json-rpc error event handler
- * @memberOf LivePrinter
- */
+* json-rpc error event handler
+* @memberOf LivePrinter
+*/
 export const errorHandler = {
   error: function (event) {
     appendLoggingNode($("#errors > ul"), event.message);
@@ -263,9 +263,9 @@ export const errorHandler = {
 };
 
 /**
- * json-rpc info event handler
- * @memberOf LivePrinter
- */
+* json-rpc info event handler
+* @memberOf LivePrinter
+*/
 export const infoHandler = {
   info: function (event) {
     appendLoggingNode($(infoListElement), event.message);
@@ -279,9 +279,9 @@ export const infoHandler = {
 };
 
 /**
- * json-rpc general event handler
- * @memberOf LivePrinter
- */
+* json-rpc general event handler
+* @memberOf LivePrinter
+*/
 export const commandsHandler = {
   log: function (event) {
     appendLoggingNode($("#commands > ul"), event.message);
@@ -290,11 +290,11 @@ export const commandsHandler = {
 };
 
 /**
- * json-rpc move event handler
- * @memberOf LivePrinter
- *
- * @param {Object} response Expects object parsed from MarlinParser
- */
+* json-rpc move event handler
+* @memberOf LivePrinter
+*
+* @param {Object} response Expects object parsed from MarlinParser
+*/
 export const moveHandler = (response) => {
   let result = true;
   try {
@@ -306,7 +306,7 @@ export const moveHandler = (response) => {
     printer.y = parseFloat(response.payload.pos.y);
     printer.z = parseFloat(response.payload.pos.z);
     printer.e = parseFloat(response.payload.pos.e);
-
+    
     // update GUI
     $("input[name='angle']").val(printer.angle.toFixed(4));
     $("input[name='speed']").val(printer.printspeed().toFixed(4));
@@ -320,15 +320,15 @@ export const moveHandler = (response) => {
     logerror(`Error in movehandler: is a GUI present?`);
     result = false;
   }
-
+  
   return result; // handled
 };
 
 /**
- * json-rpc serial ports list event handler
- * @param{Object} event json-rpc response (in json format)
- * @memberOf LivePrinter
- */
+* json-rpc serial ports list event handler
+* @param{Object} event json-rpc response (in json format)
+* @memberOf LivePrinter
+*/
 export const portsListHandler = function (event) {
   let ports = ["none"];
   try {
@@ -339,7 +339,7 @@ export const portsListHandler = function (event) {
     console.error(e);
     throw e;
   }
-
+  
   vars.serialPorts = []; // reset serial ports list
   let portsDropdown = $("#serial-ports-list");
   //Logger.debug("list of serial ports:");
@@ -357,7 +357,7 @@ export const portsListHandler = function (event) {
     msg += "</ul>";
     appendLoggingNode($(infoListElement), msg);
   }
-
+  
   vars.serialPorts.forEach(function (port) {
     //Logger.debug("PORT:" + port);
     let newButton = $(
@@ -368,7 +368,7 @@ export const portsListHandler = function (event) {
       e.preventDefault();
       const me = $(this);
       console.log(`serial port btn clicked ${me}`);
-
+      
       info('INIT SOUND');
       try
       { 
@@ -379,14 +379,14 @@ export const portsListHandler = function (event) {
       }
       info("opening serial port " + me.html());
       const baudRate = $("#baudrates-list .active").data("rate");
-
+      
       Logger.debug("baudRate:");
       Logger.debug(baudRate);
-
+      
       // disable changing baudrate and port
       //$("#baudrates-list > button").addClass("disabled");
       //$("#serial-ports-list > button").addClass("disabled");
-
+      
       try {
         await setSerialPort({ port, baudRate });
       } catch (err) {
@@ -401,26 +401,34 @@ export const portsListHandler = function (event) {
       $("#serial-ports-list > button").removeClass("active");
       me.addClass("active");
       $("#connect-btn").text("disconnect").addClass("active"); // toggle connect button
-
+      
+      lp.addGCodeListener({
+        gcodeEvent: sendAndHandleGCode,
+      });
+      
+      $('#vp-btn').addClass('disabled');
+      $('#vp-btn').off('click');
+      
+      
       return;
     });
     portsDropdown.append($("<li></li>").append(newButton));
   });
-
+  
   // build baud rates selection menu
-
+  
   const allBaudRates = [115200, 250000, 230400, 57600, 38400, 19200, 9600];
-
+  
   allBaudRates.forEach((rate) => {
     //Logger.debug("PORT:" + port);
     let newButton = $(
       '<button class="dropdown-item" type="button" data-rate="' +
-        rate +
-        '">' +
-        rate +
-        "</button>"
+      rate +
+      '">' +
+      rate +
+      "</button>"
     );
-
+    
     // handle click
     newButton.click(async function (e) {
       e.preventDefault();
@@ -428,40 +436,40 @@ export const portsListHandler = function (event) {
       $("#baudrates-list .active").removeClass("active");
       me.addClass("active");
     });
-
+    
     // default rate
     if (rate === 250000) {
       newButton.addClass("active");
     }
     $("#baudrates-list").append(newButton);
   });
-
+  
   const allLogLevels = ["debug", "info", "warn", "error"];
-
+  
   allLogLevels.forEach((level) => {
     const newButton = $(
       '<button class="dropdown-item" type="button" data-level="' +
-        level +
-        '">' +
-        level +
-        "</button>"
+      level +
+      '">' +
+      level +
+      "</button>"
     );
-
+    
     // handle click
     newButton.click(async function (e) {
       e.preventDefault();
       const me = $(this);
       info("setting gcode log level " + me.html());
       const level = me.data("level");
-
+      
       Logger.debug(`level: ${level}`);
-
+      
       try {
         await setGCodeLogLevel(level);
       } catch (err) {
         guiError(err);
       }
-
+      
       $("#gcodelevel-list > button").removeClass("active");
       me.addClass("active");
       return;
@@ -469,21 +477,21 @@ export const portsListHandler = function (event) {
     $("#gcodelevel-list").append(newButton);
   });
   // <div id="gcodelevel-list" class="dropdown-menu" aria-labelledby="gcodelevel-dropdown"></div>
-
+  
   blinkElem($("#serial-ports-list"));
   blinkElem($("#info-tab"));
-
+  
   return;
 };
 
 /**
- * json-rpc printer state (connected/disconnected) event handler
- * @param{Object} stateEvent json-rpc response (in json format)
- * @memberOf LivePrinter
- */
+* json-rpc printer state (connected/disconnected) event handler
+* @param{Object} stateEvent json-rpc response (in json format)
+* @memberOf LivePrinter
+*/
 export const printerStateHandler = function (stateEvent) {
   //info(JSON.stringify(stateEvent));
-
+  
   if (stateEvent.result === undefined) {
     logerror("bad state event" + JSON.stringify(stateEvent));
     return;
@@ -491,62 +499,62 @@ export const printerStateHandler = function (stateEvent) {
     const printerTab = $("#header");
     const printerState = stateEvent.result[0].state;
     const printerPort =
-      stateEvent.result[0].port === ("/dev/null" || "null")
-        ? "dummy"
-        : stateEvent.result[0].port;
+    stateEvent.result[0].port === ("/dev/null" || "null")
+    ? "dummy"
+    : stateEvent.result[0].port;
     const printerBaud = stateEvent.result[0].baud;
-
+    
     switch (printerState) {
       case "connected":
-        if (!printerTab.hasClass("blinkgreen")) {
-          printerTab.addClass("blinkgreen");
+      if (!printerTab.hasClass("blinkgreen")) {
+        printerTab.addClass("blinkgreen");
+      }
+      // highlight connected port
+      $("#serial-ports-list")
+      .children()
+      .each((i, elem) => {
+        let $elem = $(elem);
+        if (elem.innerText === printerPort) {
+          if (!$elem.hasClass("active")) {
+            $elem.addClass("active");
+            $("#connect-btn").text("disconnect").addClass("active"); // toggle connect button
+          }
+        } else {
+          $elem.removeClass("active");
         }
-        // highlight connected port
-        $("#serial-ports-list")
-          .children()
-          .each((i, elem) => {
-            let $elem = $(elem);
-            if (elem.innerText === printerPort) {
-              if (!$elem.hasClass("active")) {
-                $elem.addClass("active");
-                $("#connect-btn").text("disconnect").addClass("active"); // toggle connect button
-              }
-            } else {
-              $elem.removeClass("active");
-            }
-          });
-        $("#baudrates-list")
-          .children()
-          .each((i, elem) => {
-            let $elem = $(elem);
-            if (elem.innerText === printerBaud) {
-              if (!$elem.hasClass("active")) {
-                $elem.addClass("active");
-              }
-            } else {
-              $elem.removeClass("active");
-            }
-          });
-        break;
+      });
+      $("#baudrates-list")
+      .children()
+      .each((i, elem) => {
+        let $elem = $(elem);
+        if (elem.innerText === printerBaud) {
+          if (!$elem.hasClass("active")) {
+            $elem.addClass("active");
+          }
+        } else {
+          $elem.removeClass("active");
+        }
+      });
+      break;
       case "closed":
-        printerTab.removeClass("blinkgreen");
-        break;
+      printerTab.removeClass("blinkgreen");
+      break;
       case "error":
-        printerTab.removeClass("blinkgreen");
-        break;
+      printerTab.removeClass("blinkgreen");
+      break;
     }
   }
 };
 
 /**
- * Function to start or stop polling for printer state updates
- * @param {Boolean} state true if starting, false if stopping
- * @param {Integer} interval time interval between updates
- * @memberOf LivePrinter
- */
+* Function to start or stop polling for printer state updates
+* @param {Boolean} state true if starting, false if stopping
+* @param {Integer} interval time interval between updates
+* @memberOf LivePrinter
+*/
 export const updatePrinterState = function (state, interval = 20000) {
   const name = "stateUpdates";
-
+  
   if (!scheduler) {
     logerror("Warning: printer state update called but no scheduler!");
   } else {
@@ -587,10 +595,10 @@ $("#log-requests-btn").on("click", async function (e) {
 });
 
 /**
- * Sime async delay
- * @param {Number} ms to delay for
- * @returns {Promise} delay promise to await resolution of
- */
+* Sime async delay
+* @param {Number} ms to delay for
+* @returns {Promise} delay promise to await resolution of
+*/
 function sleep(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
@@ -608,10 +616,10 @@ $("#temp-display-btn").on("click", async function (e) {
 });
 
 /*
- * START SETTING UP SESSION VARIABLES ETC>
- * **************************************
- *
- */
+* START SETTING UP SESSION VARIABLES ETC>
+* **************************************
+*
+*/
 
 ////////////////////////////////////////////////////////////////////////
 /////////////// Utility functions
@@ -620,18 +628,18 @@ $("#temp-display-btn").on("click", async function (e) {
 const maxLogPopups = 80;
 
 /**
- * Append a dismissible, styled text node to one of the side menus, formatted appropriately.
- * @param {jQuery} elem JQuery element to append this to
- * @param {String} message message text for new element
- * @param {String} cssClass optional CSS class to append
- * @memberOf LivePrinter
- */
+* Append a dismissible, styled text node to one of the side menus, formatted appropriately.
+* @param {jQuery} elem JQuery element to append this to
+* @param {String} message message text for new element
+* @param {String} cssClass optional CSS class to append
+* @memberOf LivePrinter
+*/
 export function appendLoggingNode(elem, message, cssClass) {
   let messageString =
-    typeof message === "object" || Array.isArray(message)
-      ? JSON.stringify(message)
-      : message;
-
+  typeof message === "object" || Array.isArray(message)
+  ? JSON.stringify(message)
+  : message;
+  
   const dateStr = new Intl.DateTimeFormat("en-US", {
     year: "numeric",
     month: "numeric",
@@ -641,34 +649,34 @@ export function appendLoggingNode(elem, message, cssClass) {
     second: "numeric",
     hour12: false,
   }).format(Date.now());
-
+  
   let classes = "alert alert-primary alert-dismissible fade show";
   if (cssClass) classes += ` ${cssClass}`;
-
+  
   //if (elem.children().length > maxLogPopups) {
   //    elem.children().
   // }
   const listElement = document.createElement("li");
   listElement.classList.add(...classes.split(" "));
   listElement.setAttribute("role", "alert");
-
+  
   listElement.appendChild(document.createTextNode(dateStr));
-
+  
   const msgElem = document.createElement("strong");
   msgElem.innerHTML = ` :: ${messageString}&nbsp;`;
-
+  
   listElement.appendChild(msgElem);
-
+  
   const buttonClose = document.createElement("button");
   buttonClose.setAttribute("type", "button");
   buttonClose.setAttribute("data-dismiss", "alert");
   buttonClose.setAttribute("aria-label", "Close");
   buttonClose.classList.add("close");
-
+  
   listElement.appendChild(buttonClose);
-
+  
   elem.prepend(listElement);
-
+  
   // `<li class='${classes}' role='alert'>
   //     ${dateStr}
   //      <strong>
@@ -686,51 +694,51 @@ export const taskListenerUI = {
     Logger.debug(task);
     if (task != null) $("#task-" + task.name).remove();
   },
-
+  
   EventAdded: function (task) {
     Logger.debug("event added:");
     Logger.debug(task);
-
+    
     $("#tasks > ul").prepend(
       "<li id='task-" +
-        task.name +
-        "' class='alert alert-success alert-dismissible fade show' role='alert'>" +
-        task.name +
-        "<strong>" +
-        ": " +
-        task.delay +
-        "</strong>" +
-        (!task.system
-          ? '<button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>'
-          : "") +
+      task.name +
+      "' class='alert alert-success alert-dismissible fade show' role='alert'>" +
+      task.name +
+      "<strong>" +
+      ": " +
+      task.delay +
+      "</strong>" +
+      (!task.system
+        ? '<button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>'
+        : "") +
         "</li>"
-    );
-
-    $("#task-" + task.name).on("close.bs.alert", () =>
-      scheduler.removeEventByName(task.name)
+      );
+      
+      $("#task-" + task.name).on("close.bs.alert", () =>
+        scheduler.removeEventByName(task.name)
     );
   },
-
+  
   EventsCleared: function (task) {
     Logger.debug("events cleared:");
     Logger.debug(task);
     $("#tasks > ul").empty();
   },
-
+  
   EventRun: function (task) {
     blinkElem($("#task-" + task.name));
   },
 };
 
 /**
- * Log a line of text to the logging panel on the right side
- * @param {String} text Text to log in the right info panel
- * @memberOf LivePrinter
- */
+* Log a line of text to the logging panel on the right side
+* @param {String} text Text to log in the right info panel
+* @memberOf LivePrinter
+*/
 export function info(text) {
   //Logger.debug("LOGINFO-----------");
   Logger.debug(text);
-
+  
   if (Array.isArray(text)) {
     infoHandler.info({
       time: Date.now(),
@@ -748,14 +756,14 @@ export function info(text) {
 window.info = info; //cheat, for livecoding...
 
 /**
- * Log a line of text to the logging panel on the right side
- * @param {String} text Text to log in the right info panel
- * @memberOf LivePrinter
- */
+* Log a line of text to the logging panel on the right side
+* @param {String} text Text to log in the right info panel
+* @memberOf LivePrinter
+*/
 export function logerror(text) {
   Logger.error("LOGERROR-----------");
   Logger.error(text);
-
+  
   if (typeof text === "string")
     errorHandler.error({ time: Date.now(), message: text });
   else if (typeof text === "object") {
@@ -768,12 +776,12 @@ export function logerror(text) {
 }
 
 /**
- * Attach an external script (and remove it quickly). Useful for adding outside libraries.
- * @param {String} url Url of script (or name, if in the static/misc folder)
- */
+* Attach an external script (and remove it quickly). Useful for adding outside libraries.
+* @param {String} url Url of script (or name, if in the static/misc folder)
+*/
 export function attachScript(url) {
   let realUrl = url;
-
+  
   if (url.startsWith("/")) {
     // local
     realUrl = url;
@@ -793,21 +801,21 @@ export function attachScript(url) {
 window.attachScript = attachScript; //cheat, for livecoding...
 
 /**
- * Download a file. From stack overflow
- * @param {any} data Data in file
- * @param {String} filename Name of file to save as
- * @param {String} type Type of file (e.g. text/javascript)
- * @memberOf LivePrinter
- */
+* Download a file. From stack overflow
+* @param {any} data Data in file
+* @param {String} filename Name of file to save as
+* @param {String} type Type of file (e.g. text/javascript)
+* @memberOf LivePrinter
+*/
 export async function downloadFile(data, filename, type) {
   const file = new Blob([data], { type: type });
   if (window.navigator.msSaveOrOpenBlob)
     // IE10+
-    window.navigator.msSaveOrOpenBlob(file, filename);
+  window.navigator.msSaveOrOpenBlob(file, filename);
   else {
     // Others
     const a = document.createElement("a"),
-      url = URL.createObjectURL(file);
+    url = URL.createObjectURL(file);
     a.href = url;
     a.download = filename;
     document.body.appendChild(a);
@@ -824,12 +832,12 @@ export async function downloadFile(data, filename, type) {
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
 /**
- * blink an element using css animation class
- * @param {JQuery} $elem element to blink
- * @param {String} speed "fast" or "slow"
- * @param {Function} callback function to run at end
- * @memberOf LivePrinter
- */
+* blink an element using css animation class
+* @param {JQuery} $elem element to blink
+* @param {String} speed "fast" or "slow"
+* @param {Function} callback function to run at end
+* @memberOf LivePrinter
+*/
 
 export function blinkElem($elem, speed, callback) {
   $elem.removeClass("blinkit fast slow"); // remove to make sure it's not there
@@ -847,71 +855,71 @@ export function blinkElem($elem, speed, callback) {
 }
 
 /**
- *
- * @param {Scheduler} _scheduler Scheduler object to use for tasks, repeating events, etc. If
- *  undefined, will crearte new one.
- */
+*
+* @param {Scheduler} _scheduler Scheduler object to use for tasks, repeating events, etc. If
+*  undefined, will crearte new one.
+*/
 export async function initUI(_printer, _limiter, _scheduler) {
   setLogInfo(info);
   setLogCommands(commandsHandler.log);
   setLogPrinterState(printerStateHandler);
-
+  
   //TEST -- remove this
   // console.error(
   //   MarlinLineParserResultPosition.parse(
   //     "X:10.00 Y:10.00 Z:30.00 E:0.00 Count X:1040 Y:1000 Z:12000"
   //   )
   // );
-
+  
   if (!_printer) {
     logerror("FATAL error: no liveprinter object in gui init()!");
     return;
   } else {
     printer = _printer;
   }
-
+  
   // we can use our own, or the one passed in
   if (!_scheduler) scheduler = new Scheduler();
   else scheduler = _scheduler;
-
+  
   if (!_limiter) throw new Error("No Limiter for GUI!");
-
+  
   ///--------------------------------------
   ///---------setup GUI--------------------
   ///--------------------------------------
   /**
-   * build examples loader links for dynamically loading example files
-   * @memberOf LivePrinter
-   */
-
+  * build examples loader links for dynamically loading example files
+  * @memberOf LivePrinter
+  */
+  
   $("#connect-btn").on("click", async function (e) {
     e.preventDefault();
     
     info("OPENING SERIAL PORT");
-
+    
     const notCalledFromCode = !(
       e.namespace !== undefined && e.namespace === ""
     );
     if (notCalledFromCode) {
       const me = $(this);
       const connected = me.hasClass("active"); // because it becomes active *after* a push
-
+      
       // try disconnect
       if (connected) {
         const selectedPort = $("#serial-ports-list .active");
         if (selectedPort.length > 0) {
           info("Closing open port " + selectedPort.html());
-
+          
           const response = await closeSerialPort();
-
+          
           // returns true ifsuccessful or false otherwise
           if (response) {
             me.text("connect");
             $("#serial-ports-list > button")
-              .removeClass("active")
-              .removeClass("disabled");
+            .removeClass("active")
+            .removeClass("disabled");
             $("#baudrates-list > button").removeClass("disabled");
-
+            
             // this is how we check if connected!
             $("#header").removeClass("blinkgreen");
           } else {
@@ -929,126 +937,156 @@ export async function initUI(_printer, _limiter, _scheduler) {
           info("Opening port " + selectedPort.html());
           me.text("disconnect");
           selectedPort.click(); // trigger connection using active port
+          // add gcodeHandler
+          lp.addGCodeListener({
+            gcodeEvent: sendAndHandleGCode,
+          });
+          
+          $('#vp-btn').addClass('disabled');
+          $('#vp-btn').off('click');
         }
       }
     }
   });
-
+  
   //
   // redirect error to browser GUI
   //
   $(window).on("error", function (evt) {
     //Logger.debug("jQuery error event:");
     //Logger.debug(evt);
-
+    
     const e = evt.originalEvent.error; // get the javascript event
     //Logger.debug("original event:", e);
     guiError(e);
   });
-
+  
   // temperature buttons
   $("#basic-addon-tempbed").on("click", async () =>
     printer.bed(parseFloat($("input[name=tempbed]")[0].value))
-  );
-  $("#basic-addon-temphot").on("click", async () =>
-    printer.temp(parseFloat($("input[name=temphot]")[0].value))
-  );
+);
+$("#basic-addon-temphot").on("click", async () =>
+  printer.temp(parseFloat($("input[name=temphot]")[0].value))
+);
 
-  $("#basic-addon-angle").on("click", () =>
-    printer.turnto(parseFloat($("input[name=angle]")[0].value))
-  );
+$("#basic-addon-angle").on("click", () =>
+  printer.turnto(parseFloat($("input[name=angle]")[0].value))
+);
 
-  $("#basic-addon-retract").on(
-    "click",
-    () =>
-      (printer.currentRetraction = parseFloat(
-        $("input[name=retract]")[0].value
-      ))
-  );
+$("#basic-addon-retract").on(
+  "click",
+  () =>
+    (printer.currentRetraction = parseFloat(
+    $("input[name=retract]")[0].value
+  ))
+);
 
-  $("#refresh-serial-ports-btn").on("click", async function (e) {
-    e.preventDefault();
-    if (!this.working) {
-      this.working = true;
-    } else {
-      info("Getting serial ports...");
-
-      try {
-        const portsList = await getSerialPorts();
-        await portsListHandler(portsList);
-      } catch (err) {
-        guiError(err);
-      }
-
-      this.working = false;
+$("#refresh-serial-ports-btn").on("click", async function (e) {
+  e.preventDefault();
+  if (!this.working) {
+    this.working = true;
+  } else {
+    info("Getting serial ports...");
+    
+    try {
+      const portsList = await getSerialPorts();
+      await portsListHandler(portsList);
+    } catch (err) {
+      guiError(err);
     }
-    return true;
-  });
+    
+    this.working = false;
+  }
+  return true;
+});
 
-  // disable form reloading on code compile
-  $("form").submit(false);
+// disable form reloading on code compile
+$("form").submit(false);
 
-  //hide tab-panel after codeMirror rendering (by removing the extra 'active' class)
-  $(".hideAfterLoad").each(function () {
-    $(this).removeClass("active");
-  });
+//hide tab-panel after codeMirror rendering (by removing the extra 'active' class)
+$(".hideAfterLoad").each(function () {
+  $(this).removeClass("active");
+});
 
-  /// Clear printer queue on server
-  $("#clear-btn").on("click", async ()=>{await limiter.stop(); limiter.init(); });
+/// Clear printer queue on server
+$("#clear-btn").on("click", async ()=>{await limiter.stop(); limiter.init(); });
 
-  onPosition(async (v) => moveHandler(v));
-  onCodeDone(async (v) => {
-    const dateStr = new Intl.DateTimeFormat("en-US", {
-      hour: "numeric",
-      minute: "numeric",
-      second: "numeric",
-      hour12: false,
-    }).format(new Date(Date.now()));
+const vpb = $('#vp-btn');
 
-    let msg;
-    if (v.queued === 0) {
-      msg = `done: no code running [${dateStr}]`;
-    } else {
-      msg = `done: other code blocks in queue: ${v.queued} [${dateStr}]`;
+vpb.on("click",  async (event) => {
+  const hdr = $("#header");
+  if (!hdr.hasClass("blinkgreen")) {
+    hdr.addClass("blinkgreen");
+    info('INIT SOUND');
+    try
+    { 
+      await initSound(printer);
     }
-    document.getElementById("working-tab").innerHTML = msg;
-    blinkElem($("#working-tab"));
-    //loginfo(`done: code blocks running: ${v.queued}`);
-  });
-  onCodeQueued(async (v) => {
-    const dateStr = new Intl.DateTimeFormat("en-US", {
-      hour: "numeric",
-      minute: "numeric",
-      second: "numeric",
-      hour12: false,
-    }).format(new Date(Date.now()));
+    catch(err) {
+      logerror(`Error initializing sound: ${err}`);
+    }
+    vpb.html('STOP VIRTUAL SERVER');
+  } 
+  else 
+    {
+    hdr.removeClass("blinkgreen");
+    vpb.html('START VIRTUAL SERVER');
+  }
+});
 
-    document.getElementById(
-      "working-tab"
-    ).innerHTML = `queued: code block running (queued: ${v.queued}) [${dateStr}]`;
-    //loginfo(`queued: code blocks running: ${v.queued}`);
-  });
+onPosition(async (v) => moveHandler(v));
+onCodeDone(async (v) => {
+  const dateStr = new Intl.DateTimeFormat("en-US", {
+    hour: "numeric",
+    minute: "numeric",
+    second: "numeric",
+    hour12: false,
+  }).format(new Date(Date.now()));
+  
+  let msg;
+  if (v.queued === 0) {
+    msg = `done: no code running [${dateStr}]`;
+  } else {
+    msg = `done: other code blocks in queue: ${v.queued} [${dateStr}]`;
+  }
+  document.getElementById("working-tab").innerHTML = msg;
+  blinkElem($("#working-tab"));
+  //loginfo(`done: code blocks running: ${v.queued}`);
+});
+onCodeQueued(async (v) => {
+  const dateStr = new Intl.DateTimeFormat("en-US", {
+    hour: "numeric",
+    minute: "numeric",
+    second: "numeric",
+    hour12: false,
+  }).format(new Date(Date.now()));
+  
+  document.getElementById(
+    "working-tab"
+  ).innerHTML = `queued: code block running (queued: ${v.queued}) [${dateStr}]`;
+  //loginfo(`queued: code blocks running: ${v.queued}`);
+});
 
-  // With the live server, this just blinks constantly...
-  // liveprintercomms.onOk(async () => {
+// With the live server, this just blinks constantly...
+// liveprintercomms.onOk(async () => {
   //     blinkElem($("#working-tab"));
-  // });
+// });
 
-  updatePrinterState(true);
+updatePrinterState(true);
 
-  // get ports!
-  await $("#refresh-serial-ports-btn").click();
+// get ports!
+await $("#refresh-serial-ports-btn").click();
 }
 
 /**
- * Handles logging of a GCode response from the server
- * @param {Object} res
- * @returns {Boolean} whether handled or not
- * @alias comms:handleGCodeResponse
- */
+* Handles logging of a GCode response from the server
+* @param {Object} res
+* @returns {Boolean} whether handled or not
+* @alias comms:handleGCodeResponse
+*/
 export async function handleGCodeResponse(result) {
   let handled = result != null;
-
+  
   if (result !== undefined) {
     if (!Array.isArray(result)) {
       result = [result];
@@ -1061,11 +1099,11 @@ export async function handleGCodeResponse(result) {
         handled = false;
         break;
       }
-
+      
       // try move handler
       const positionResult = MarlinLineParserResultPosition.parse(rr);
       const tempResult = MarlinLineParserResultTemperature.parse(rr);
-
+      
       if (tempResult != null) {
         tempHandler(tempResult);
         debug("temperature event handled");
@@ -1073,12 +1111,12 @@ export async function handleGCodeResponse(result) {
       }
       if (positionResult != null) {
         moveHandler(positionResult);
-
+        
         // move/position update handled
         await positionEvent(positionResult);
         handled = true;
       }
-
+      
       if (!handled) {
         if (rr.match(/ok/i)) {
           await okEvent(rr);
@@ -1090,6 +1128,6 @@ export async function handleGCodeResponse(result) {
       }
     }
   }
-
+  
   return handled;
 }

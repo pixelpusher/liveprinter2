@@ -57,9 +57,6 @@ globalThis.$ = globalThis.jquery = $;
   
   /// attach listeners
 
-  lp.addGCodeListener({
-    gcodeEvent: sendAndHandleGCode,
-  });
   lp.addErrorListener({ errorEvent: doError });
 
   ///
