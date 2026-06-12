@@ -51,7 +51,8 @@ import {
   clearError,
   updateGUI,
   info,
-  guiError
+  guiError,
+  errorHandler
 } from "./liveprinter.ui";
 import { makeVisualiser } from "vizlib";
 import { transpile } from "lp-language";
@@ -60,8 +61,11 @@ import { iterateLSystem, makeCommands, drawCommands } from "./tpj/lsystems.js";
 import { lpDark } from "./lpDarkTheme.ts";
 // const commentRegex = /\/\*[\s\S]*?\*\/|([^\\:]|^)\/\/.*$/gm; // https://stackoverflow.com/questions/5989315/regex-for-match-replacing-javascript-comments-both-multiline-and-inline/15123777#15123777
 const mathjsRegex = /(m\')(.*?)(\')/g; // matches mathjs function calls like m'sin(0.5)'
+const asyncOpenRegex = /{{/g
+const asyncCloseRegex = /}}/g
+const asyncOpenReplaceString = '( async ()=> {\n\t';
+const asyncCloseReplaceString = '\n\t});\n';
 
-setDoError(guiError);
 
 let limiter = null; // limiter for async queue
 
@@ -244,7 +248,8 @@ window.addEventListener('unhandledrejection', function(event) {
   event.preventDefault();
 
   // console.error("Unhandled promise (error in evaluated code?):", event);
-  guiError(event.reason);
+  historyAndGUIError(event.reason);
+  
 
 });
 
@@ -273,7 +278,6 @@ function recordCode(editor, code) {
   const codeText = "//" + dateStr + "\n\n" + code + (code.endsWith("\n") ? "" : "\n" + "\n");
   
   editor.value += codeText;
-  //return [code,lastLine];
 }
 
 /**
@@ -299,25 +303,66 @@ function recordGCode(editor, gcode) {
   // ignore temperature or other info commands - no need to save these!
   const usefulGCode = gcodeArray.filter((_gcode) => !/M114|M105/.test(_gcode));
   
-  const doc = editor.getDoc();
-  let line = doc.lastLine();
-  const pos = {
-    line: line,
-    ch: doc.getLine(line).length,
-  };
   const gcodeText = "\n" + dateStr + usefulGCode.join("\n");
-  doc.replaceRange(gcodeText, pos);
-  editor.refresh();
-  let newpos = { line: doc.lastLine(), ch: doc.getLine(line).length };
-  editor.setSelection(pos, newpos);
-  editor.scrollIntoView(newpos);
   
-  return usefulGCode;
+  editor.value += gcodeText;
 }
 
+/**
+ * Record error massages in code editor for reviewing later
+ * @param {CodeEditor} editor
+ * @param {Error} err 
+ */
+function recordError(editor, err) {
+  
+  // add comment with date and time
+  const dateStr =
+  new Date().toLocaleString("en-US", {
+    hour12: false,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+  }) + "\n";
+  
+  let codeText = "ERROR";
 
+  if (typeof err !== "object") {
+    codeText = "//" + dateStr + "// ERROR: " + err + (err.endsWith("\n") ? "" : "\n" + "\n");
+  }
+  else 
+  {
+    // handle nested errors
+    if (err.error !== undefined) err = err.error;
+    const lineNumber = err.lineNumber == null ? -1 : err.lineNumber;
+    codeText = "//" + dateStr + "// ERROR: " + err.name + ": " + err.message + " (line:" + lineNumber + ")\n\n";
+  }
+
+  editor.value += codeText;
+}
+
+/**
+ * Record error in History Editor
+ */
+function historyAndGUIError(err) {
+  recordError(HistoryCodeEditor, err);
+  guiError(err);
+}
+
+setDoError(historyAndGUIError);
+
+
+/**
+ * Pre-process incoming code before transpiling. Replace mathjs expressions and async function shortcuts.
+ * @param {String} code 
+ * @returns 
+ */
 function preprocess(code) {
   code = code.replaceAll(mathjsRegex,  "parser.evaluate('$2')");
+  code = code.replaceAll(asyncOpenRegex, asyncOpenReplaceString);
+  code = code.replaceAll(asyncCloseRegex, asyncCloseReplaceString);
   
   debug("code before pre-preprocessing-------------------------------");
   debug(code);
@@ -342,7 +387,7 @@ async function runCode(code, immediate = false) {
     const err = new Error(
       "Printer not connected! Please connect first using the printer settings tab."
     );
-    guiError(err);
+    historyAndGUIError(err);
     throw err;
     //TODO: BIGGER ERROR MESSAGE HERE
   } else {
@@ -357,7 +402,10 @@ async function runCode(code, immediate = false) {
     code = preprocess(code)
     
     try {
-      const results = await buildEvaluateFunction(code, transpile);
+      const results = await buildEvaluateFunction({
+        code, transpiler:transpile, 
+        options: {errorHandler: historyAndGUIError}
+      });
       const resultFunction = results.result;
       debug(
         `Evaluated code[immediate]: ${JSON.stringify(results.code, null, 2)}`
@@ -371,7 +419,7 @@ async function runCode(code, immediate = false) {
         }
         catch(err)
         {
-          guiError(err);
+          historyAndGUIError(err);          
         }
       } else {
         result = limiter.schedule(() => resultFunction());
@@ -380,7 +428,7 @@ async function runCode(code, immediate = false) {
       // blink the form
       blinkElem($("form"));
     } catch (err) {
-      guiError(err);
+      historyAndGUIError(err);
     }
   }
   return result;
@@ -479,7 +527,6 @@ function storageAvailable(type) {
         countto,
         numrange,
         info,
-        guiError,
         uzu,
         delay(d) {visualiser.vizevents.delay = d;}, // delay for visualiser, hacky
         iterateLSystem, makeCommands, drawCommands, // lsystem functions
@@ -593,7 +640,7 @@ function storageAvailable(type) {
         // });
       })
       .fail(function () {
-        guiError({ name: "error", message: "file load error:" + filename });
+        historyAndGUIError("Error loading example file: " + filename);
       });
     });
     

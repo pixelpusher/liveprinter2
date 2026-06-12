@@ -1,11 +1,12 @@
 import { MonoSynth, start } from "tone";
 import { Logger } from "liveprinter-utils";
 
+
 let started = false;
 
   const synthX = new MonoSynth({
     oscillator: {
-        type: "pulse"
+        type: "sawtooth"
     },
     envelope: {
         attack: 0.01
@@ -14,28 +15,29 @@ let started = false;
 
 const synthY = new MonoSynth({
   oscillator: {
-      type: "pwm"
+      type: "square"
   },
   envelope: {
-      attack: 0
+      attack: 0.01
   }
 }).toDestination();
 
 const synthZ = new MonoSynth({
   oscillator: {
-      type: "pulse"
+      type: "sawtooth"
   },
   envelope: {
-      attack: 0
+      attack: 0.01
   }
 }).toDestination();
 
 const synthE = new MonoSynth({
   oscillator: {
-      type: "pulse"
+      type: "sine"
   },
   envelope: {
-      attack: 0
+      attack: 0.2,
+      release: 0.4
   }
 }).toDestination();
 
@@ -49,7 +51,7 @@ export function playNotes(noteFreqs, duration) {
   synthX.triggerAttack(noteFreqs.x, `+${duration / 1000}`, 0.2);
   synthY.triggerAttack(noteFreqs.y, `+${duration / 1000}`, 0.2);
   synthZ.triggerAttack(noteFreqs.z, `+${duration / 1000}`, 0.2);
-  if (noteFreqs.e) synthE.triggerAttack(noteFreqs.e, `+${duration / 1000}`, 0.2);
+  if (noteFreqs.e) synthE.triggerAttack(noteFreqs.e*4, `+${duration / 1000}`, 0.2);
 }
 
 export function stopNotes() {

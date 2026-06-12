@@ -56,50 +56,41 @@ function safeEvalFunction(code) {
   // remove all unescaped newlines
   const body = `"use strict";${code}`.replaceAll(/\r?\n|\r/gm, "");
 
-  let result = new AsyncFunction(`"use strict";return false`);
-  try {
-    result = new AsyncFunction(body);
-  } catch (err) {
-    // `Error creating new function: ${
-    //   typeof err == "string" ? err : JSON.stringify(err, null, 2)
-    // }`
-    guiError(err);
-  }
-
+  // make async function
+  const result = new AsyncFunction(body);
+  
   return result;
 }
 /**
  * Transpile code and return results for later use (evaluated function object and transpiled code)
  * @param {String} code Code to transpile and turn into an AsyncFunction object for later use
  * @param {Object} transpiler Transpiler object
- * @param {Object} transpilerOptions Options for transpiler
+ * @param {Object} transpilerOptions Options for transpiler like {errorHandler: function}
  * @returns {Object} Returns object of the form: { mode: "javascript", result: AsyncFunction, code: "transpiled code" }
  */
 export async function buildEvaluateFunction(
-  code,
-  transpiler,
-  transpilerOptions,
+  {
+    code, transpiler, options
+  },
 ) {
   const result = { mode: "javascript", result: null, code };
+  const errorHandler = (options?.errorHandler || guiError);
   try {
-    if (transpiler) {
-      // transform liveprinter grammar and javascript mix into javascript code
-      const transpiled = transpiler(code, transpilerOptions);
-      result.newcode = transpiled;
-    }
-  } catch (terr) {
-    guiError(`transpile error: ${terr}`);
+    // transform liveprinter grammar and javascript mix into javascript code
+    const transpiled = transpiler(code, options?.objName || undefined);
+    result.newcode = transpiled;
+  } catch (err) {
+    errorHandler(`transpile error: ${terr}`);
   }
-  // if no transpiler is given, we expect a single instruction (!wrapExpression)
-  const options = { wrapExpression: !transpiler };
   try {
-    const evaluateFunction = safeEvalFunction(result.newcode, options);
+    const evaluateFunction = safeEvalFunction(result.newcode);
     result.result = evaluateFunction;
   } catch (err) {
     console.log(
       `ERROR evaluating transpiled code ${JSON.stringify(err, null, 2)}`,
     );
-    guiError(err);
+    err.message = `Error evaluating transpiled code: ${err.message}`;
+    errorHandler(err);
   }
   return result;
 }
