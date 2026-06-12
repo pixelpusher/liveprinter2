@@ -70,6 +70,24 @@ const asyncCloseReplaceString = '\n\t});\n';
 let limiter = null; // limiter for async queue
 
 /**
+ * Get date string for logging purposes
+ */
+function getDateString() {
+  // add comment with date and time
+  return
+  new Date().toLocaleString("en-US", {
+    hour12: false,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+    fractionalSecondDigits: 3
+  }) + "\n";
+}
+
+/**
 * 
 * @param {EditorView} view 
 * @returns text of current line
@@ -264,16 +282,7 @@ function recordCode(editor, code) {
   ///
   
   // add comment with date and time
-  const dateStr =
-  new Date().toLocaleString("en-US", {
-    hour12: false,
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-    hour: "2-digit",
-    minute: "2-digit",
-    second: "2-digit",
-  }) + "\n";
+  const dateStr = getDateString();
   
   const codeText = "//" + dateStr + "\n\n" + code + (code.endsWith("\n") ? "" : "\n" + "\n");
   
@@ -288,16 +297,7 @@ function recordCode(editor, code) {
 
 function recordGCode(editor, gcode) {
   // add comment with date and time
-  const dateStr =
-  new Date().toLocaleString("en-US", {
-    hour12: false,
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-    hour: "2-digit",
-    minute: "2-digit",
-    second: "2-digit",
-  }) + "\n";
+  const dateStr = getDateString();
   
   const gcodeArray = Array.isArray(gcode) ? gcode : [gcode];
   // ignore temperature or other info commands - no need to save these!
@@ -315,17 +315,7 @@ function recordGCode(editor, gcode) {
  */
 function recordError(editor, err) {
   
-  // add comment with date and time
-  const dateStr =
-  new Date().toLocaleString("en-US", {
-    hour12: false,
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-    hour: "2-digit",
-    minute: "2-digit",
-    second: "2-digit",
-  }) + "\n";
+  const dateStr = getDateString();
   
   let codeText = "ERROR";
 
@@ -670,15 +660,8 @@ function storageAvailable(type) {
     $(".btn-download").on("click", async () => {
       // add comment with date and time
       const dateStr =
-      "_" +
-      new Date().toLocaleString("en-US", {
-        hour12: false,
-        year: "2-digit",
-        month: "2-digit",
-        day: "2-digit",
-        hour: "2-digit",
-        minute: "2-digit",
-      });
+      "_" + getDateString().trim();
+      
       await downloadFile(
         CodeEditor.value,
         "lp-editor-1-" + dateStr + ".js",
