@@ -9,7 +9,7 @@ import {
 
 import { Limiter } from "./liveprinter.limiter.js";
 import { doError } from "./logging-utils.js";
-import { initEditors } from "./liveprinter.editor";
+import { initEditors } from "./liveprinter.editor.js";
 import { Logger } from "liveprinter-utils";
 import $ from "jquery";
 
