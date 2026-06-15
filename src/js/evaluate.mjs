@@ -80,7 +80,7 @@ export async function buildEvaluateFunction(
     const transpiled = transpiler(code, options?.objName || undefined);
     result.newcode = transpiled;
   } catch (err) {
-    errorHandler(`transpile error: ${terr}`);
+    errorHandler(`transpile error: ${err}`);
   }
   try {
     const evaluateFunction = safeEvalFunction(result.newcode);
