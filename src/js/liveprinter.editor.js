@@ -70,19 +70,19 @@ const asyncCloseReplaceString = '\n\t});\n';
 let limiter = null; // limiter for async queue
 
 const dateTimeFormat = new Intl.DateTimeFormat("en-GB", {
-    hour12: false,
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-    hour: "2-digit",
-    minute: "2-digit",
-    second: "2-digit",
-    fractionalSecondDigits: 3
-  });
+  hour12: false,
+  year: "numeric",
+  month: "2-digit",
+  day: "2-digit",
+  hour: "2-digit",
+  minute: "2-digit",
+  second: "2-digit",
+  fractionalSecondDigits: 3
+});
 
 /**
- * Get date string for logging purposes
- */
+* Get date string for logging purposes
+*/
 function getDateString() {
   // add comment with date and time
   return dateTimeFormat.format(new Date()) + "\n";
@@ -111,6 +111,44 @@ const selectLine = (view) => {
   return line.text;
 };
 
+// A lightweight debouncing helper
+function debounce(func, delay) {
+  let timeoutId;
+  return (...args) => {
+    clearTimeout(timeoutId);
+    timeoutId = setTimeout(() => func(...args), delay);
+  };
+}
+
+/**
+* Save editor text to localstorage key
+*/
+function createAutosaveExtension(storageKey, delay=500){
+  
+  const saveToStorage = debounce((storageKey, text) => {
+    try {
+      localStorage.setItem(storageKey, text);
+    } catch (e) {
+      e.message = `Failed updating editor ${key} in localStorage (quota exceeded?) ${e.message}`;
+      historyAndGUIError(e);
+    }
+  }, delay); // 500ms pause threshold
+  
+  // Create the CodeMirror Update Listener extension
+  const autoSaveExtension = EditorView.updateListener.of((update) => {
+    // Only trigger a save if the actual document text changed
+    if (update.docChanged) {
+      // Accessing .toString() here is fine because it's debounced and isolated
+      saveToStorage(update.state.doc.toString());
+    }
+  });
+
+  return autoSaveExtension;
+}
+
+// Define reasonable limits for editor document length in browser
+const MAX_DOC_LENGTH = 5_000_000; // ~5MB or 5 million characters
+
 /**
 * Create a lightweight CodeMirror editor for code editing
 * @param {Object} config - Configuration object
@@ -121,7 +159,6 @@ const selectLine = (view) => {
 * @returns {Object} Editor object with value getter/setter and focus method
 */
 function createCodeMirrorEditor(config) {
-  let lastSavedValue = config.value;
   
   const state = EditorState.create({
     doc: config.value,
@@ -161,17 +198,10 @@ function createCodeMirrorEditor(config) {
       
       javascript(), 
       lpDark, 
-      // bracketMatching({ brackets: '()[]{}<>' }),
-      EditorView.updateListener.of((update) => {
-        // Save to localStorage on document changes
-        if (update.docChanged) {
-          const newValue = update.state.doc.toString();
-          if (newValue !== lastSavedValue) {
-            localStorage.setItem(config.id, newValue);
-            lastSavedValue = newValue;
-          }
-        }
-      }),
+      // bracketMatching({ brackets: '()[]{}<>##' }),
+      
+      createAutosaveExtension(config.id, 500), // local storage saving extension defined by liveprinter
+      
       keymap.of([
         // Closed-brackets aware backspace
         ...closeBracketsKeymap,
@@ -233,16 +263,60 @@ return {
   get value() {
     return view.state.doc.toString();
   },
-  set value(text) {
-    // Replace the entire document
+  
+  // add text to end of code editor
+  append(text) {
+    // Calculate the current length of the document
+    const currentLength = view.state.doc.length;
+    
+    // Insert text at end
     view.dispatch({
       changes: {
-        from: 0,
-        to: view.state.doc.length,
+        from: currentLength,
         insert: text,
       },
     });
-    lastSavedValue = text;
+    
+    // Evaluate the resultant state length efficiently,
+    // avoid toString() -- accessing .length on the tree 
+    // is an O(1) operation
+    if (view.state.doc.length > MAX_DOC_LENGTH) {
+      logInfo("Editor code buffer is full! Empty it?");
+      
+      // Truncate the top of the file to preserve memory (FIFO buffer)
+      const overflowAmount = view.state.doc.length - MAX_DOC_LENGTH;
+      
+      // Find a clean line break near the overflow margin so we don't sever a word
+      const lineBoundary = view.state.doc.lineAt(overflowAmount).to;
+      
+      view.dispatch({
+        changes: {
+          from: 0,
+          to: lineBoundary,
+          insert: ""
+        }
+      });
+    }
+  },
+  
+  set value(text) {
+    // check to make sure text isn't too large!
+    if (text.length > MAX_DOC_LENGTH)
+      {
+      throw new RangeError(`Error setting editor value, there's too much text!`);
+    }
+    
+    // Calculate the current length of the document    
+    const currentLength = view.state.doc.length;
+    
+    // Replace all text
+    view.dispatch({
+      changes: {
+        from:0,
+        to: currentLength,
+        insert: text,
+      },
+    });
   },
   focus() {
     view.focus();
@@ -262,14 +336,14 @@ let HistoryCodeEditor;
 // Hack to catch ALL errors in the interactive editor that might slip through because of forgotten await/catch() etc on async functions
 
 window.addEventListener('unhandledrejection', function(event) {
-
+  
   // Prevent the default browser console error
   event.preventDefault();
-
+  
   // console.error("Unhandled promise (error in evaluated code?):", event);
   historyAndGUIError(event.reason);
   
-
+  
 });
 
 /**
@@ -285,9 +359,10 @@ function recordCode(editor, code) {
   // add comment with date and time
   const dateStr = getDateString();
   
-  const codeText = "//" + dateStr + "\n" + code + (code.endsWith("\n") ? "" : "\n" + "\n");
+  const codeText = "//" + dateStr + "\n" + code + (code.endsWith("\n") ? "" : "\n");
   
-  editor.value += codeText;
+  editor.append(codeText);
+  
 }
 
 /**
@@ -306,37 +381,37 @@ function recordGCode(editor, gcode) {
   
   const gcodeText = "\n" + dateStr + usefulGCode.join("\n");
   
-  editor.value += gcodeText;
+  editor.append(gcodeText);
 }
 
 /**
- * Record error massages in code editor for reviewing later
- * @param {CodeEditor} editor
- * @param {Error} err 
- */
+* Record error massages in code editor for reviewing later
+* @param {CodeEditor} editor
+* @param {Error} err 
+*/
 function recordError(editor, err) {
   
   const dateStr = getDateString();
   
   let codeText = "ERROR";
-
+  
   if (typeof err !== "object") {
     codeText = "//" + dateStr + "// ERROR: " + err + (err.endsWith("\n") ? "" : "\n" + "\n");
   }
   else 
-  {
+    {
     // handle nested errors
     if (err.error !== undefined) err = err.error;
     const lineNumber = err.lineNumber == null ? -1 : err.lineNumber;
-    codeText = "//" + dateStr + "// ERROR: " + err.name + ": " + err.message + " (line:" + lineNumber + ")\n\n";
+    codeText = "//" + dateStr + "// ERROR: " + err.name + ": " + err.message + " (line:" + lineNumber + ")\n";
   }
-
-  editor.value += codeText;
+  
+  editor.append(codeText);
 }
 
 /**
- * Record error in History Editor
- */
+* Record error in History Editor
+*/
 function historyAndGUIError(err) {
   recordError(HistoryCodeEditor, err);
   guiError(err);
@@ -346,10 +421,10 @@ setDoError(historyAndGUIError);
 
 
 /**
- * Pre-process incoming code before transpiling. Replace mathjs expressions and async function shortcuts.
- * @param {String} code 
- * @returns 
- */
+* Pre-process incoming code before transpiling. Replace mathjs expressions and async function shortcuts.
+* @param {String} code 
+* @returns 
+*/
 function preprocess(code) {
   code = code.replaceAll(mathjsRegex,  "parser.evaluate('$2')");
   code = code.replaceAll(asyncOpenRegex, asyncOpenReplaceString);
@@ -461,7 +536,7 @@ function storageAvailable(type) {
     }
   }
   
-
+  
   /**
   * Initialise editors and events, etc.
   * @returns {PromiseFulfilledResult}
@@ -489,9 +564,9 @@ function storageAvailable(type) {
     
     
     /**
-     * Toggle sidebar with CTRL-H (capital H)
-     * @param {KeyboardEvent} event 
-     */
+    * Toggle sidebar with CTRL-H (capital H)
+    * @param {KeyboardEvent} event 
+    */
     document.onkeydown = (event) =>{
       
       // this may have to be changed in FireFox using about:keyboard
@@ -506,7 +581,7 @@ function storageAvailable(type) {
       }
       
     };
-  
+    
     // add libraries, object namespaces, etc. to compilation environment (see @runCode)  
     evalScope(
       {
@@ -662,7 +737,7 @@ function storageAvailable(type) {
       // add comment with date and time
       const dateStr =
       "_" + getDateString().trim();
-
+      
       await downloadFile(
         CodeEditor.value,
         "lp-editor-1-" + dateStr + ".js",
