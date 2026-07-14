@@ -35,10 +35,13 @@ import { parseStrudel as uzu } from "lp-language";
 export { createCodeMirrorEditor } from "./liveprinter.codemirror.js";
 
 // Import and re-export storage and initialization utilities
-export { 
-  getDateString,
+import { getDateString } from "./liveprinter.editor-utils.js";
+
+export {
   storageAvailable,  
 } from "./liveprinter.editor-utils.js";
+
+export { getDateString };
 
 // Import and re-export execution utilities
 export {

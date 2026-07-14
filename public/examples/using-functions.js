@@ -1,19 +1,20 @@
 // Using functions with LivePrinter
-// By Evan Raskob, 2020
+// By Evan Raskob, 2026
 // --------------------------------
 
 // You can mix liveprinter code with javascript.
 // There are some utility functions to help you do things faster...
 
-await repeat (5, async () => {
+await repeat (5, {{ 
 	# gcode "M105"
     # wait 500
     loginfo("got temp!");
-})
+}}
+);
 
-
-await repeat (8, async () => {
+// using easier syntax for wrapping ES6 arrow async functions
+await repeat (8, {{
 	# gcode "M105"
     # wait 500
     loginfo("got temp!");
-})
+}});
