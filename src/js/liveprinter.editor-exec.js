@@ -157,7 +157,7 @@ export async function runCode(code, immediate = false) {
     if (Array.isArray(code)) {
       immediate = false;
     } else {
-      recordCode('\n'+code); // make sure we don't lose any lines?
+      recordCode('//CODE:\n'+code);
     }
     
     clearError();
@@ -171,8 +171,11 @@ export async function runCode(code, immediate = false) {
       });
       const resultFunction = results.result;
       debug(
-        `Evaluated code[immediate]: ${JSON.stringify(results.code, null, 2)}`
+        `Evaluated code ${immediate ? '[immediate]' : ''}: ${results.newcode}`
       );
+
+      recordCode(`//EVALUATED${immediate ? '[immediate]': ''}${results.newcode}`);
+
       
       if (immediate) {
         try 
