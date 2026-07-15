@@ -258,7 +258,12 @@ export async function initEditors(lp, _limiter) {
     );
     await downloadFile(
       CodeEditor3.value,
-      "Presets-" + dateStr + ".js",
+      "lp-presets-" + dateStr + ".js",
+      "text/javascript"
+    );
+    await downloadFile(
+      HistoryCodeEditor.value,
+      "lp-history-" + dateStr + ".js",
       "text/javascript"
     );
   });
