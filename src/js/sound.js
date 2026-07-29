@@ -1,64 +1,113 @@
 import { MonoSynth, start } from "tone";
 import { Logger } from "liveprinter-utils";
 
-
 let started = false;
 
-  const synthX = new MonoSynth({
-    oscillator: {
-        type: "sawtooth"
-    },
-    envelope: {
-        attack: 0.01
-    }
-}).toDestination();
+export let droneMode = true; // whether the sound just continues like a drone or stops like a real printer
 
-const synthY = new MonoSynth({
+const synthXTriangle = new MonoSynth({
   oscillator: {
-      type: "square"
+    type: "sine"
   },
   envelope: {
-      attack: 0.01
+    attack: 0.02
   }
 }).toDestination();
 
-const synthZ = new MonoSynth({
+const synthXSawtooth = new MonoSynth({
   oscillator: {
-      type: "sawtooth"
+    type: "sawtooth"
   },
   envelope: {
-      attack: 0.01
+    attack: 0.01
   }
 }).toDestination();
 
-const synthE = new MonoSynth({
+const synthYTriangle = new MonoSynth({
   oscillator: {
-      type: "sine"
+    type: "sine"
   },
   envelope: {
-      attack: 0.2,
-      release: 0.4
+    attack: 0.02
+  }
+}).toDestination();
+
+const synthYSawtooth = new MonoSynth({
+  oscillator: {
+    type: "sawtooth"
+  },
+  envelope: {
+    attack: 0.01
+  }
+}).toDestination();
+
+const synthZTriangle = new MonoSynth({
+  oscillator: {
+    type: "triangle"
+  },
+  envelope: {
+    attack: 0.01
+  }
+}).toDestination();
+
+const synthZSawtooth = new MonoSynth({
+  oscillator: {
+    type: "sawtooth"
+  },
+  envelope: {
+    attack: 0.01
+  }
+}).toDestination();
+
+const synthETriangle = new MonoSynth({
+  oscillator: {
+    type: "triangle"
+  },
+  envelope: {
+    attack: 0.2,
+    release: 0.4
+  }
+}).toDestination();
+
+const synthESawtooth = new MonoSynth({
+  oscillator: {
+    type: "sawtooth"
+  },
+  envelope: {
+    attack: 0.2,
+    release: 0.4
   }
 }).toDestination();
 
 export function playNotes(noteFreqs, duration) {
-//  Logger.info(`note freqs: ${JSON.stringify(noteFreqs)} for ${duration}`);
+Logger.debug(`note freqs: ${JSON.stringify(noteFreqs)} for ${duration}`);
   
   // ramp to "C2" over 2 seconds
   //osc.frequency.rampTo("C2", 2);
   // start the oscillator for 2 seconds
-  
-  synthX.triggerAttack(noteFreqs.x, `+${duration / 1000}`, 0.2);
-  synthY.triggerAttack(noteFreqs.y, `+${duration / 1000}`, 0.2);
-  synthZ.triggerAttack(noteFreqs.z, `+${duration / 1000}`, 0.2);
-  if (noteFreqs.e) synthE.triggerAttack(noteFreqs.e*4, `+${duration / 1000}`, 0.2);
+
+  const dur = duration / 1000;
+  synthXTriangle.triggerAttackRelease(noteFreqs.x, dur, undefined, 0.05);
+  synthXSawtooth.triggerAttackRelease(noteFreqs.x, dur, undefined, 0.125);
+  synthYTriangle.triggerAttackRelease(noteFreqs.y, dur, undefined, 0.05);
+  synthYSawtooth.triggerAttackRelease(noteFreqs.y, dur, undefined, 0.125);
+  synthZTriangle.triggerAttackRelease(noteFreqs.z, dur, undefined, 0.05);
+  synthZSawtooth.triggerAttackRelease(noteFreqs.z, dur, undefined, 0.125);
+  if (noteFreqs.e) {
+    synthETriangle.triggerAttackRelease(noteFreqs.e * 4, dur, undefined, 0.075);
+    synthESawtooth.triggerAttackRelease(noteFreqs.e * 4, dur, undefined, 0.125);
+  }
 }
 
 export function stopNotes() {
-  synthX.triggerRelease();
-  synthY.triggerRelease();
-  synthZ.triggerRelease();
-  synthE.triggerRelease();
+  synthXTriangle.triggerRelease();
+  synthXSawtooth.triggerRelease();
+  synthYTriangle.triggerRelease();
+  synthYSawtooth.triggerRelease();
+  synthZTriangle.triggerRelease();
+  synthZSawtooth.triggerRelease();
+  synthETriangle.triggerRelease();
+  synthESawtooth.triggerRelease();
 }
 
 const eventsListener = {
@@ -83,20 +132,21 @@ const eventsListener = {
           length: ${length}`
       );
 
-      if (type === "wait-start" || type === "retract") {
-        stopNotes();
-        return;
-      }
-
-      if (type === "wait-end" ||
+      if (
+        type === "wait-start" || 
+        type === "retract" || 
+        type === "wait-end" ||
         type === "draw-end" ||
+        type === "extrude-end" ||
         type === "travel-end" ||
         type === "traveltime-end" ||
         type === "drawtime-end" ||
-        type === "unretract"
+        type === "unretract" 
       ) {
+        if (!droneMode) stopNotes();
         return;
       }
+
       if (!newPosition || !oldPosition) return;
 
       const speedPerAxisMs = {
