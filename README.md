@@ -39,3 +39,21 @@ This works(!) *but* is very much experimental and under development and things a
 
 Enjoy and good luck! And yes you might break your printer, but I've never done it (using the software, anyway).
 
+## Asynchronous printing in LivePrinter
+
+Here's the typical flow for a move or extrude operation:
+
+1. `lp.move()` or `lp.extrude()` in `liveprinter.js` (**liveprinter-core** package): These functions eventually call `extrudeto()`.
+2. `extrudeto()` in `liveprinter.js`: This function calculates the new position and then calls await this.`sendExtrusionGCode(_speed);`.
+3. `sendExtrusionGCode()` in `liveprinter.js`: This constructs the GCode command (e.g., `G1 X... Y... Z... E... F...`) and then calls `await this.gcodeEvent(moveCode.join(" "));`.
+4. `gcodeEvent()` in `liveprinter.js`: This dispatches the GCode to registered listeners. One such listener, set up in `liveprinter.ui.js`, is `sendAndHandleGCode()`.
+5. `sendAndHandleGCode()` in `liveprinter.ui.js`: This calls `await sendGCodeRPC(gcode);`.
+6. `sendGCodeRPC()` in `liveprinter.comms.js`: This is where the actual network request happens, calling `await sendJSONRPC(JSON.stringify(gcodeObj));`.
+7. `sendJSONRPC()` in `liveprinter.comms.js`: This function makes an `$.ajax` call to your backend server and awaits its response.
+
+The critical point is step 6 and 7. The JavaScript code is waiting for the backend server to acknowledge that it has received and processed the GCode command. If your backend server is slow to process the GCode, or if the physical printer itself is slow to respond to the GCode command (which the backend might wait for), then the JavaScript application will "hang" at this await statement until a response is received. Normally, however, it uses the printer as a timing device, much like a MIDI instrument clock because 
+the printer takes a physical time to move, and in the end, the printer is a physical object that makes 
+sound and thus is the ultimate source of timing truth in this system.
+
+The Bottleneck limiter, as configured in liveprinter.limiter.js (maxConcurrent: 1, minTime: 0), acts as
+a FIFO queue of asynchronous calls, ensuring that only one high-level code block (like the `lp.mainloop` function) runs at a time. However, it doesn't prevent individual `await` calls within that block from waiting for network or I/O operations.
