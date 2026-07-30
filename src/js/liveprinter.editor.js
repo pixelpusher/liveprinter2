@@ -1,15 +1,15 @@
 /**
- * Code editing functionality for LivePrinter.
- * 
- * This module serves as the main entry point, initilises the CodeMirror text editors
- * and re-exports the modularized editor functionality:
- * - liveprinter.codemirror.js: CodeMirror setup and editor creation
- * - liveprinter.editor-utils.js: Utilities like storageAvailable() and initEditors()
- * - liveprinter.editor-exec.js: Code processing, running, and recording
- * 
- * @module Editors
- * @typicalname editors
- */
+* Code editing functionality for LivePrinter.
+* 
+* This module serves as the main entry point, initilises the CodeMirror text editors
+* and re-exports the modularized editor functionality:
+* - liveprinter.codemirror.js: CodeMirror setup and editor creation
+* - liveprinter.editor-utils.js: Utilities like storageAvailable() and initEditors()
+* - liveprinter.editor-exec.js: Code processing, running, and recording
+* 
+* @module Editors
+* @typicalname editors
+*/
 
 import $ from "jquery";
 import * as gridlib from "gridlib";
@@ -29,7 +29,7 @@ import {
 } from "./liveprinter.ui.js";
 import { runCode, recordCode, setLimiter } from "./liveprinter.editor-exec.js";
 import { parseStrudel as uzu } from "lp-language";
-
+import { setSynthAttack, setSynthRelease } from "./sound.js"
 
 // Import and re-export CodeMirror utilities
 export { createCodeMirrorEditor } from "./liveprinter.codemirror.js";
@@ -55,11 +55,11 @@ export {
 } from "./liveprinter.editor-exec.js";
 
 /**
- * Initialise editors and events, etc.
- * @param {Object} lp - LivePrinter instance
- * @param {Object} _limiter - Code execution limiter
- * @returns {Promise<void>}
- */
+* Initialise editors and events, etc.
+* @param {Object} lp - LivePrinter instance
+* @param {Object} _limiter - Code execution limiter
+* @returns {Promise<void>}
+*/
 export async function initEditors(lp, _limiter) {
   
   // Pass the limiter to the execution module
@@ -74,18 +74,18 @@ export async function initEditors(lp, _limiter) {
     printHeadColor: 0xffbb55, printHeadRadius: 3,
     fogEnabled: true, fogColor: 0x0f0f0f, fogNear: 5000, fogFar: 7800,
     glowEnabled: true,
-    glowStrength: 2.0,
+    glowStrength: 1.5,
     glowRadius: 0.4,
     glowThreshold: 0.1,
-    travelLineGlow: 1.5,
-    extrudeLineGlow: 3.0,
+    travelLineGlow: 1,
+    extrudeLineGlow: 2.0,
   });
   
   
   /**
-   * Toggle sidebar with CTRL-H (capital H)
-   * @param {KeyboardEvent} event 
-   */
+  * Toggle sidebar with CTRL-H (capital H)
+  * @param {KeyboardEvent} event 
+  */
   document.onkeydown = (event) =>{
     
     // this may have to be changed in FireFox using about:keyboard
@@ -115,7 +115,14 @@ export async function initEditors(lp, _limiter) {
       uzu,
       delay(d) {visualiser.vizevents.delay = d;}, // delay for visualiser, hacky
       iterateLSystem, makeCommands, drawCommands, // lsystem functions
-      seq:Sequence
+      seq:Sequence,
+      
+      setAttack(beatsOrTime){
+        setSynthAttack(lp.parseAsTime(beatsOrTime));
+      },
+      setRelease(beatsOrTime){
+        setSynthRelease(lp.parseAsTime(beatsOrTime));
+      },
     },
     visualiser,
     gridlib
@@ -270,4 +277,3 @@ export async function initEditors(lp, _limiter) {
   
   return;
 }
-
