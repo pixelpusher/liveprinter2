@@ -97,7 +97,15 @@ export async function initEditors(lp, _limiter) {
         inbox.style.display = "none";
       }
     }
-    
+    // toggle all editors, useful for tweaking 3D camera
+    else if (event.ctrlKey && event.key == 'h') {
+      const editorsPanel = document.getElementById('printer-editor-col');
+      if (editorsPanel.style.display === "none") {
+        editorsPanel.style.display = "block";
+      } else {
+        editorsPanel.style.display = "none";
+      }
+    }
   };
   
 
