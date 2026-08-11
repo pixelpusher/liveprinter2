@@ -26,7 +26,6 @@ import {
   logCommands,
 } from "./logging-utils.js";
 import Logger from "liveprinter-utils/logger";
-import $ from "jquery";
 
 export const remotePort = 8888; // port for server, might be different that url if testing
 
@@ -67,25 +66,34 @@ export async function sendJSONRPC(request) {
 
   if (vars.logAjax) logCommands(`SENDING ${reqId}::${request}`);
 
-  let response = "awaiting response";
+  let response;
 
   Logger.debug(
     `${location.protocol}//${location.hostname}:${remotePort}/jsonrpc`
   );
 
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), vars.ajaxTimeout);
+
   try {
-    response = await $.ajax({
-      url: `${location.protocol}//${location.hostname}:${remotePort}/jsonrpc`,
-      type: "POST",
-      data: JSON.stringify(args),
-      timeout: vars.ajaxTimeout, // might be a long wait on startup... printer takes time to start up and dump messages
+    const res = await fetch(`${location.protocol}//${location.hostname}:${remotePort}/jsonrpc`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
+        },
+        body: JSON.stringify(args),
+        signal: controller.signal
     });
+    clearTimeout(timeoutId);
+    if (!res.ok) {
+      throw new Error(`HTTP error! status: ${res.status}`);
+    }
+    response = await res.json();
   } catch (error) {
-    // statusText field has error ("timeout" in this case)
-    response = JSON.stringify(error, null, 2);
-    const statusText = `JSON error response communicating with server:<br/>${response}<br/>Orig:${request}`;
-    Logger.error(statusText);
-    logError(statusText);
+    clearTimeout(timeoutId);
+    const errorMsg = error.name === 'AbortError' ? 'timeout' : error.message;
+    response = { error: { message: errorMsg, request } };
   }
   if (undefined !== response.error) {
     logError(
@@ -122,50 +130,63 @@ export async function getData(url, type = "POST", data) {
 
   //args._xsrf = getCookie("_xsrf");
 
-  let response = "awaiting response";
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), vars.ajaxTimeout);
 
   try {
-    response = await $.ajax({
-      url,
-      type,
-      data,
-      timeout: vars.ajaxTimeout, // might be a long wait on startup... printer takes time to start up and dump messages
-    });
+    const fetchOptions = {
+      method: type,
+      signal: controller.signal,
+      headers: { 'Content-Type': 'application/json' }
+    };
+    if (type === 'POST') {
+      fetchOptions.body = data;
+    }
+
+    const res = await fetch(url, fetchOptions);
+    clearTimeout(timeoutId);
+
+    if (!res.ok) {
+      throw new Error(`HTTP error! status: ${res.status}`);
+    }
+
+    const response = await res.json();
+
+    if (undefined !== response.error) {
+      logError(
+        `getData(): Error response communicating with server:<br/>${JSON.stringify(
+          response.error,
+          null,
+          2
+        )}<br/>Orig:${url}`
+      );
+      return JSON.stringify(response);
+    }
+
+    if (undefined === response.data) {
+      logError(
+        `Missing data field in response from server in getData(): ${JSON.stringify(
+          response,
+          null,
+          2
+        )}`
+      );
+      return response;
+    }
+
+    return response.data;
+
   } catch (error) {
-    // statusText field has error ("timeout" in this case)
-    response = JSON.stringify(error, null, 2);
+    clearTimeout(timeoutId);
+    const errorMsg = error.name === 'AbortError' ? 'timeout' : error.message;
+    const errorObj = { error: { message: errorMsg, url } };
+    const response = JSON.stringify(errorObj, null, 2);
     const statusText = `JSON error response communicating with server:<br/>${response}<br/>Orig:${url}`;
     Logger.error(statusText);
     logError(statusText);
 
     return response;
   }
-
-  if (undefined !== response.error) {
-    logError(
-      `getData(): Error response communicating with server:<br/>${JSON.stringify(
-        response.error,
-        null,
-        2
-      )}<br/>Orig:${url}`
-    );
-    response = JSON.stringify(error, null, 2);
-    return response;
-  }
-
-  if (undefined === response.data) {
-    logError(
-      `Missing data field in response from server in getData(): ${JSON.stringify(
-        response,
-        null,
-        2
-      )}`
-    );
-  } else {
-    response = response.data;
-  }
-
-  return response;
 }
 
 /**
@@ -441,4 +462,3 @@ export async function sendGCodeRPC(gcode) {
 //     }
 //   );
 // }
-

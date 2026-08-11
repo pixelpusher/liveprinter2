@@ -16,8 +16,8 @@
 * License for the specific language governing permissions and limitations
 * under the License.
 */
-import { Logger, Scheduler } from "liveprinter-utils";
-import $ from "jquery";
+
+import { Logger } from "liveprinter-utils";
 
 import { initSound } from "./sound.js";
 
@@ -75,7 +75,6 @@ export let infoListElement = "#info > ul"; // for logging info to GUI
 
 let lastErrorMessage = "none"; // last error message for GUI
 
-let scheduler = null; // task scheduler, see init()
 let printer = null; // liveprinter printer object
 let limiter = null; // limiting scheduler
 
@@ -93,22 +92,22 @@ export async function sendAndHandleGCode(gcode) {
 */
 
 export function updateGUI() {
-  $("input[name='x']").val(printer.x.toFixed(4));
-  $("input[name='y']").val(printer.y.toFixed(4));
-  $("input[name='z']").val(printer.z.toFixed(4));
-  $("input[name='e']").val(printer.e.toFixed(4));
-  $("input[name='angle']").val(printer.angle.toFixed(4));
-  $("input[name='speed']").val(printer.printspeed().toFixed(4));
-  $("input[name='retract']").val(printer.currentRetraction.toFixed(4));
-  $("input[name='time']").val(hms(printer.time.toFixed(2)));
+  document.querySelector("input[name='x']").value = printer.x.toFixed(4);
+  document.querySelector("input[name='y']").value = printer.y.toFixed(4);
+  document.querySelector("input[name='z']").value = printer.z.toFixed(4);
+  document.querySelector("input[name='e']").value = printer.e.toFixed(4);
+  document.querySelector("input[name='angle']").value = printer.angle.toFixed(4);
+  document.querySelector("input[name='speed']").value = printer.printspeed().toFixed(4);
+  document.querySelector("input[name='retract']").value = printer.currentRetraction.toFixed(4);
+  document.querySelector("input[name='time']").value = hms(printer.time.toFixed(2));
 }
 
 /**
 * Clear HTML of all displayed code errors
 */
 export function clearError() {
-  $(".code-errors").html("<p>[no errors]</p>");
-  $(".modal-errors").empty();
+  document.querySelector(".code-errors").innerHTML = "<p>[no errors]</p>";
+  document.querySelector(".modal-errors").innerHTML = "";
 }
 
 let lastErrorTime = 0;
@@ -132,45 +131,28 @@ export function guiError(e) {
   //     lastErrorMessage = err.message;
   
   if (typeof e !== "object") {
-    
-    $(".code-errors").html(
-      "<p>" + e + "</p>"
-    );
-    
-    $(".modal-errors").prepend(
-      "<div class='alert alert-warning alert-dismissible fade show' role='alert'>" +
-      '<em>PRINTER JAMMED!</em> '
-      +
-      e +
-      '<button type="button" class="close" data-dismiss="alert" aria-label="Close">' +
-      '<span aria-hidden="true">&times;</span></button>' +
-      "</div>"
-    );
-    
+    document.querySelector(".code-errors").innerHTML = `<p>${e}</p>`;
+
+    const errorHtml = `<div class="alert alert-warning alert-dismissible fade show" role="alert">
+        <em>PRINTER JAMMED!</em> 
+        ${e}
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+      </div>`;
+    document.querySelector(".modal-errors").insertAdjacentHTML('afterbegin', errorHtml);
   } else {
     let err = e;
     if (e.error !== undefined) err = e.error;
     const lineNumber = err.lineNumber == null ? -1 : e.lineNumber;
     
     // report to user
-    $(".code-errors").html(
-      "<p>" + err.name + ": " + err.message + " (line:" + lineNumber + ")</p>"
-    );
-    
-    $(".modal-errors").prepend(
-      "<div class='alert alert-warning alert-dismissible fade show' role='alert'>" +
-      '<em>PRINTER JAMMED!</em> ' 
-      +
-      err.name +
-      ": " +
-      err.message +
-      " (line:" +
-      lineNumber +
-      ")" +
-      '<button type="button" class="close" data-dismiss="alert" aria-label="Close">' +
-      '<span aria-hidden="true">&times;</span></button>' +
-      "</div>"
-    );
+    document.querySelector(".code-errors").innerHTML = `<p>${err.name}: ${err.message} (line:${lineNumber})</p>`;
+
+    const errorHtml = `<div class="alert alert-warning alert-dismissible fade show" role="alert">
+        <em>PRINTER JAMMED!</em> 
+        ${err.name}: ${err.message} (line:${lineNumber})
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+      </div>`;
+    document.querySelector(".modal-errors").insertAdjacentHTML('afterbegin', errorHtml);
   }
   Logger.error(e);
 }
@@ -212,32 +194,32 @@ export function tempHandler(result) {
       const tmpbed = parseFloat(result.bed).toFixed(2);
       const targetbed = parseFloat(result.bed_target).toFixed(2);
       
-      $("input[name='temphot']").val(target);
-      $("input[name='tempbed']").val(targetbed);
-      const $tt = $("input[name='temphot-target']")[0];
-      if ($tt !== $(document.activeElement)) $tt.value = tmp;
-      $("input[name='tempbed-target']").val(tmpbed);
+      document.querySelector("input[name='temphot']").value = target;
+      document.querySelector("input[name='tempbed']").value = targetbed;
+      const tt = document.querySelector("input[name='temphot-target']");
+      if (tt !== document.activeElement) tt.value = tmp;
+      document.querySelector("input[name='tempbed-target']").value = tmpbed;
     } catch (e) {
       handled = false;
       // unhandled, maybe not attached to gui?
-      logerror(`Error in temphandler: is a GUI present?`);
+      logError(`Error in temphandler: is a GUI present?`);
     }
   }
   //try MarlinParser format
   else {
     try {
       if (undefined !== result.payload.extruder) {
-        $("input[name='temphot']").val(result.payload.extruder.deg);
+        document.querySelector("input[name='temphot']").value = result.payload.extruder.deg;
         // make sure user isn't typing in this
-        let $tt = $("input[name='temphot-target']")[0];
-        if ($tt !== $(document.activeElement))
-          $tt.value = result.payload.extruder.degTarget;
+        let tt = document.querySelector("input[name='temphot-target']");
+        if (tt !== document.activeElement)
+          tt.value = result.payload.extruder.degTarget;
       }
       if (undefined !== result.payload.heatedBed) {
-        $("input[name='tempbed']").val(result.payload.heatedBed.deg);
-        let $tt = $("input[name='tempbed-target']")[0];
-        if ($tt !== $(document.activeElement))
-          $tt.value = result.payload.heatedBed.degTarget;
+        document.querySelector("input[name='tempbed']").value = result.payload.heatedBed.deg;
+        let tt = document.querySelector("input[name='tempbed-target']");
+        if (tt !== document.activeElement)
+          tt.value = result.payload.heatedBed.degTarget;
       }
     } catch (err) {
       // unhandled, maybe not attached to gui?
@@ -256,9 +238,9 @@ export function tempHandler(result) {
 */
 export const errorHandler = {
   error: function (event) {
-    appendLoggingNode($("#errors > ul"), event.message);
-    blinkElem($("#errors-tab"));
-    blinkElem($("#inbox"));
+    appendLoggingNode(document.querySelector("#errors > ul"), event.message);
+    blinkElem(document.getElementById("errors-tab"));
+    blinkElem(document.getElementById("inbox"));
   },
 };
 
@@ -268,13 +250,13 @@ export const errorHandler = {
 */
 export const infoHandler = {
   info: function (event) {
-    appendLoggingNode($(infoListElement), event.message);
+    appendLoggingNode(document.querySelector(infoListElement), event.message);
     //blinkElem($("#info-tab"));
   },
   resend: function (event) {
-    appendLoggingNode($(infoListElement), event.message);
-    blinkElem($("#info-tab"));
-    blinkElem($("#inbox"));
+    appendLoggingNode(document.querySelector(infoListElement), event.message);
+    blinkElem(document.getElementById("info-tab"));
+    blinkElem(document.getElementById("inbox"));
   },
 };
 
@@ -284,8 +266,8 @@ export const infoHandler = {
 */
 export const commandsHandler = {
   log: function (event) {
-    appendLoggingNode($("#commands > ul"), event.message);
-    blinkElem($("#inbox"));
+    appendLoggingNode(document.querySelector("#commands > ul"), event.message);
+    blinkElem(document.getElementById("inbox"));
   },
 };
 
@@ -308,16 +290,16 @@ export const moveHandler = (response) => {
     printer.e = parseFloat(response.payload.pos.e);
     
     // update GUI
-    $("input[name='angle']").val(printer.angle.toFixed(4));
-    $("input[name='speed']").val(printer.printspeed().toFixed(4));
-    $("input[name='retract']").val(printer.currentRetraction.toFixed(4));
-    $("input[name='x']").val(printer.x.toFixed(4));
-    $("input[name='y']").val(printer.y.toFixed(4));
-    $("input[name='z']").val(printer.z.toFixed(4));
-    $("input[name='e']").val(printer.e.toFixed(4));
+    document.querySelector("input[name='angle']").value = printer.angle.toFixed(4);
+    document.querySelector("input[name='speed']").value = printer.printspeed().toFixed(4);
+    document.querySelector("input[name='retract']").value = printer.currentRetraction.toFixed(4);
+    document.querySelector("input[name='x']").value = printer.x.toFixed(4);
+    document.querySelector("input[name='y']").value = printer.y.toFixed(4);
+    document.querySelector("input[name='z']").value = printer.z.toFixed(4);
+    document.querySelector("input[name='e']").value = printer.e.toFixed(4);
   } catch (err) {
     // unhandled, maybe not attached to gui?
-    logerror(`Error in movehandler: is a GUI present?`);
+    logError(`Error in movehandler: is a GUI present?`);
     result = false;
   }
   
@@ -341,12 +323,12 @@ export const portsListHandler = function (event) {
   }
   
   vars.serialPorts = []; // reset serial ports list
-  let portsDropdown = $("#serial-ports-list");
+  const portsDropdown = document.getElementById("serial-ports-list");
   //Logger.debug("list of serial ports:");
   //Logger.debug(event);
-  portsDropdown.empty();
+  portsDropdown.innerHTML = '';
   if (ports.length === 0) {
-    appendLoggingNode($(infoListElement), "<li>no serial ports found</li > ");
+    appendLoggingNode(document.querySelector(infoListElement), "<li>no serial ports found</li>");
     vars.serialPorts.push("dummy");
   } else {
     let msg = "<ul>Serial ports found:";
@@ -355,18 +337,20 @@ export const portsListHandler = function (event) {
       vars.serialPorts.push(p);
     }
     msg += "</ul>";
-    appendLoggingNode($(infoListElement), msg);
+    appendLoggingNode(document.querySelector(infoListElement), msg);
   }
   
   vars.serialPorts.forEach(function (port) {
     //Logger.debug("PORT:" + port);
-    let newButton = $(
-      '<a class="dropdown-item" data-port-name="' + port + '">' + port + "</a>"
-    );
-    //newButton.data("portName", port);
-    newButton.click(async function (e) {
+    const newButton = document.createElement('a');
+    newButton.className = 'dropdown-item';
+    newButton.dataset.portName = port;
+    newButton.href = '#';
+    newButton.textContent = port;
+
+    newButton.addEventListener('click', async function (e) {
       e.preventDefault();
-      const me = $(this);
+      const me = e.currentTarget;
       console.log(`serial port btn clicked ${me}`);
       
       info('INIT SOUND');
@@ -375,10 +359,10 @@ export const portsListHandler = function (event) {
         await initSound(printer);
       }
       catch(err) {
-        logerror(`Error initializing sound: ${err}`);
+        logError(`Error initializing sound: ${err}`);
       }
-      info("opening serial port " + me.html());
-      const baudRate = $("#baudrates-list .active").data("rate");
+      info("opening serial port " + me.textContent);
+      const baudRate = document.querySelector("#baudrates-list .active")?.dataset.rate;
       
       Logger.debug("baudRate:");
       Logger.debug(baudRate);
@@ -398,69 +382,74 @@ export const portsListHandler = function (event) {
       } catch (err) {
         guiError(err);
       }
-      $("#serial-ports-list > button").removeClass("active");
-      me.addClass("active");
-      $("#connect-btn").text("disconnect").addClass("active"); // toggle connect button
+      document.querySelectorAll("#serial-ports-list > a").forEach(btn => btn.classList.remove("active"));
+      me.classList.add("active");
+      const connectBtn = document.getElementById('connect-btn');
+      connectBtn.textContent = "disconnect";
+      connectBtn.classList.add("active");
       
       lp.addGCodeListener({
         gcodeEvent: sendAndHandleGCode,
       });
       
-      $('#vp-btn').addClass('disabled');
-      $('#vp-btn').off('click');
-      
+      const vpBtn = document.getElementById('vp-btn');
+      const newVpBtn = vpBtn.cloneNode(true);
+      vpBtn.parentNode.replaceChild(newVpBtn, vpBtn);
+      newVpBtn.classList.add('disabled');
       
       return;
     });
-    portsDropdown.append($("<li></li>").append(newButton));
+    const li = document.createElement('li');
+    li.appendChild(newButton);
+    portsDropdown.appendChild(li);
   });
   
   // build baud rates selection menu
   
   const allBaudRates = [115200, 250000, 230400, 57600, 38400, 19200, 9600];
+  const baudratesList = document.getElementById("baudrates-list");
+  baudratesList.innerHTML = '';
   
   allBaudRates.forEach((rate) => {
     //Logger.debug("PORT:" + port);
-    let newButton = $(
-      '<button class="dropdown-item" type="button" data-rate="' +
-      rate +
-      '">' +
-      rate +
-      "</button>"
-    );
+    const newButton = document.createElement('button');
+    newButton.className = 'dropdown-item';
+    newButton.type = 'button';
+    newButton.dataset.rate = rate;
+    newButton.textContent = rate;
     
     // handle click
-    newButton.click(async function (e) {
+    newButton.addEventListener('click', async function (e) {
       e.preventDefault();
-      const me = $(this);
-      $("#baudrates-list .active").removeClass("active");
-      me.addClass("active");
+      const me = e.currentTarget;
+      baudratesList.querySelector(".active")?.classList.remove("active");
+      me.classList.add("active");
     });
     
     // default rate
     if (rate === 250000) {
-      newButton.addClass("active");
+      newButton.classList.add("active");
     }
-    $("#baudrates-list").append(newButton);
+    baudratesList.appendChild(newButton);
   });
   
   const allLogLevels = ["debug", "info", "warn", "error"];
+  const gcodeLevelList = document.getElementById("gcodelevel-list");
+  gcodeLevelList.innerHTML = '';
   
   allLogLevels.forEach((level) => {
-    const newButton = $(
-      '<button class="dropdown-item" type="button" data-level="' +
-      level +
-      '">' +
-      level +
-      "</button>"
-    );
+    const newButton = document.createElement('button');
+    newButton.className = 'dropdown-item';
+    newButton.type = 'button';
+    newButton.dataset.level = level;
+    newButton.textContent = level;
     
     // handle click
-    newButton.click(async function (e) {
+    newButton.addEventListener('click', async function (e) {
       e.preventDefault();
-      const me = $(this);
-      info("setting gcode log level " + me.html());
-      const level = me.data("level");
+      const me = e.currentTarget;
+      info("setting gcode log level " + me.textContent);
+      const level = me.dataset.level;
       
       Logger.debug(`level: ${level}`);
       
@@ -470,16 +459,16 @@ export const portsListHandler = function (event) {
         guiError(err);
       }
       
-      $("#gcodelevel-list > button").removeClass("active");
-      me.addClass("active");
+      gcodeLevelList.querySelectorAll("button").forEach(btn => btn.classList.remove("active"));
+      me.classList.add("active");
       return;
     });
-    $("#gcodelevel-list").append(newButton);
+    gcodeLevelList.appendChild(newButton);
   });
   // <div id="gcodelevel-list" class="dropdown-menu" aria-labelledby="gcodelevel-dropdown"></div>
   
-  blinkElem($("#serial-ports-list"));
-  blinkElem($("#info-tab"));
+  blinkElem(document.getElementById("serial-ports-list"));
+  blinkElem(document.getElementById("info-tab"));
   
   return;
 };
@@ -493,10 +482,10 @@ export const printerStateHandler = function (stateEvent) {
   //info(JSON.stringify(stateEvent));
   
   if (stateEvent.result === undefined) {
-    logerror("bad state event" + JSON.stringify(stateEvent));
+    logError("bad state event" + JSON.stringify(stateEvent));
     return;
   } else {
-    const printerTab = $("#header");
+    const printerTab = document.getElementById("header");
     const printerState = stateEvent.result[0].state;
     const printerPort =
     stateEvent.result[0].port === ("/dev/null" || "null")
@@ -506,114 +495,45 @@ export const printerStateHandler = function (stateEvent) {
     
     switch (printerState) {
       case "connected":
-      if (!printerTab.hasClass("blinkgreen")) {
-        printerTab.addClass("blinkgreen");
+      if (!printerTab.classList.contains("blinkgreen")) {
+        printerTab.classList.add("blinkgreen");
       }
       // highlight connected port
-      $("#serial-ports-list")
-      .children()
-      .each((i, elem) => {
-        let $elem = $(elem);
-        if (elem.innerText === printerPort) {
-          if (!$elem.hasClass("active")) {
-            $elem.addClass("active");
-            $("#connect-btn").text("disconnect").addClass("active"); // toggle connect button
+      document.getElementById("serial-ports-list").querySelectorAll('a').forEach(elem => {
+        if (elem.textContent === printerPort) {
+          if (!elem.classList.contains("active")) {
+            elem.classList.add("active");
+            const connectBtn = document.getElementById('connect-btn');
+            connectBtn.textContent = "disconnect";
+            connectBtn.classList.add("active");
           }
         } else {
-          $elem.removeClass("active");
+          elem.classList.remove("active");
         }
       });
-      $("#baudrates-list")
-      .children()
-      .each((i, elem) => {
-        let $elem = $(elem);
-        if (elem.innerText === printerBaud) {
-          if (!$elem.hasClass("active")) {
-            $elem.addClass("active");
+      document.getElementById("baudrates-list").querySelectorAll('button').forEach(elem => {
+        if (elem.textContent === printerBaud) {
+          if (!elem.classList.contains("active")) {
+            elem.classList.add("active");
           }
         } else {
-          $elem.removeClass("active");
+          elem.classList.remove("active");
         }
       });
       break;
       case "closed":
-      printerTab.removeClass("blinkgreen");
+      if (printerTab) {
+        printerTab.classList.remove("blinkgreen");
+      }
       break;
       case "error":
-      printerTab.removeClass("blinkgreen");
+      if (printerTab) {
+        printerTab.classList.remove("blinkgreen");
+      }
       break;
     }
   }
 };
-
-/**
-* Function to start or stop polling for printer state updates
-* @param {Boolean} state true if starting, false if stopping
-* @param {Integer} interval time interval between updates
-* @memberOf LivePrinter
-*/
-export const updatePrinterState = function (state, interval = 20000) {
-  const name = "stateUpdates";
-  
-  if (!scheduler) {
-    logerror("Warning: printer state update called but no scheduler!");
-  } else {
-    if (state) {
-      // schedule state updates every little while
-      scheduler.scheduleEvent({
-        name: name,
-        delay: interval,
-        run: async (time) => {
-          try {
-            const state = await getPrinterState();
-            printerStateHandler(state);
-          } catch (err) {
-            guiError(err);
-          }
-        },
-        repeat: true,
-        system: true, // system event, non-cancellable by user
-      });
-    } else {
-      // stop updates
-      scheduler.removeEventByName(name);
-    }
-  }
-};
-
-$("#log-requests-btn").on("click", async function (e) {
-  let me = $(this);
-  let doUpdates = !me.hasClass("active"); // because it becomes active *after* a push
-  if (doUpdates) {
-    me.text("stop logging ajax");
-    vars.logAjax = true;
-  } else {
-    me.text("start logging ajax");
-    vars.logAjax = false;
-  }
-  me.button("toggle");
-});
-
-/**
-* Sime async delay
-* @param {Number} ms to delay for
-* @returns {Promise} delay promise to await resolution of
-*/
-function sleep(ms) {
-  return new Promise((resolve) => setTimeout(resolve, ms));
-}
-
-$("#temp-display-btn").on("click", async function (e) {
-  let me = $(this);
-  let doUpdates = !me.hasClass("active"); // because it becomes active *after* a push
-  if (doUpdates) {
-    me.text("stop polling temperature");
-    updateTemperature();
-  } else {
-    me.text("start polling Temperature");
-  }
-  me.button("toggle");
-});
 
 /*
 * START SETTING UP SESSION VARIABLES ETC>
@@ -629,7 +549,7 @@ const maxLogPopups = 80;
 
 /**
 * Append a dismissible, styled text node to one of the side menus, formatted appropriately.
-* @param {jQuery} elem JQuery element to append this to
+* @param {HTMLElement} elem DOM element to append this to
 * @param {String} message message text for new element
 * @param {String} cssClass optional CSS class to append
 * @memberOf LivePrinter
@@ -653,9 +573,10 @@ export function appendLoggingNode(elem, message, cssClass) {
   let classes = "alert alert-primary alert-dismissible fade show";
   if (cssClass) classes += ` ${cssClass}`;
   
-  //if (elem.children().length > maxLogPopups) {
-  //    elem.children().
-  // }
+  if (elem.childElementCount > maxLogPopups) {
+    // remove oldest child
+    elem.removeChild(elem.firstElementChild);
+  }
   const listElement = document.createElement("li");
   listElement.classList.add(...classes.split(" "));
   listElement.setAttribute("role", "alert");
@@ -669,66 +590,14 @@ export function appendLoggingNode(elem, message, cssClass) {
   
   const buttonClose = document.createElement("button");
   buttonClose.setAttribute("type", "button");
-  buttonClose.setAttribute("data-dismiss", "alert");
+  buttonClose.setAttribute("data-bs-dismiss", "alert");
   buttonClose.setAttribute("aria-label", "Close");
-  buttonClose.classList.add("close");
+  buttonClose.classList.add("btn-close");
   
   listElement.appendChild(buttonClose);
   
   elem.prepend(listElement);
-  
-  // `<li class='${classes}' role='alert'>
-  //     ${dateStr}
-  //      <strong>
-  //         : ${messageString}
-  //     </strong>
-  //     <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-  //     <span aria-hidden="true">&times;</span></button>
-  // </li>`
-  // );
 }
-
-export const taskListenerUI = {
-  EventRemoved: function (task) {
-    Logger.debug("event removed:");
-    Logger.debug(task);
-    if (task != null) $("#task-" + task.name).remove();
-  },
-  
-  EventAdded: function (task) {
-    Logger.debug("event added:");
-    Logger.debug(task);
-    
-    $("#tasks > ul").prepend(
-      "<li id='task-" +
-      task.name +
-      "' class='alert alert-success alert-dismissible fade show' role='alert'>" +
-      task.name +
-      "<strong>" +
-      ": " +
-      task.delay +
-      "</strong>" +
-      (!task.system
-        ? '<button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>'
-        : "") +
-        "</li>"
-      );
-      
-      $("#task-" + task.name).on("close.bs.alert", () =>
-        scheduler.removeEventByName(task.name)
-    );
-  },
-  
-  EventsCleared: function (task) {
-    Logger.debug("events cleared:");
-    Logger.debug(task);
-    $("#tasks > ul").empty();
-  },
-  
-  EventRun: function (task) {
-    blinkElem($("#task-" + task.name));
-  },
-};
 
 /**
 * Log a line of text to the logging panel on the right side
@@ -833,24 +702,29 @@ export async function downloadFile(data, filename, type) {
 
 /**
 * blink an element using css animation class
-* @param {JQuery} $elem element to blink
+* @param {HTMLElement} elem element to blink
 * @param {String} speed "fast" or "slow"
 * @param {Function} callback function to run at end
 * @memberOf LivePrinter
 */
 
-export function blinkElem($elem, speed, callback) {
-  $elem.removeClass("blinkit fast slow"); // remove to make sure it's not there
-  $elem.on("animationend", function () {
+export function blinkElem(elem, speed, callback) {
+  if (!elem) return;
+  elem.classList.remove("blinkit", "fast", "slow"); // remove to make sure it's not there
+  
+  const handleAnimationEnd = () => {
     if (callback !== undefined && typeof callback === "function") callback();
-    $(this).removeClass("blinkit fast slow");
-  });
+    elem.classList.remove("blinkit", "fast", "slow");
+  };
+
+  elem.addEventListener("animationend", handleAnimationEnd, { once: true });
+
   if (speed === "fast") {
-    $elem.addClass("blinkit fast");
+    elem.classList.add("blinkit", "fast");
   } else if (speed === "slow") {
-    $elem.addClass("blinkit slow");
+    elem.classList.add("blinkit", "slow");
   } else {
-    $elem.addClass("blinkit");
+    elem.classList.add("blinkit");
   }
 }
 
@@ -859,7 +733,7 @@ export function blinkElem($elem, speed, callback) {
 * @param {Scheduler} _scheduler Scheduler object to use for tasks, repeating events, etc. If
 *  undefined, will crearte new one.
 */
-export async function initUI(_printer, _limiter, _scheduler) {
+export async function initUI(_printer, _limiter) {
   setLogInfo(info);
   setLogCommands(commandsHandler.log);
   setLogPrinterState(printerStateHandler);
@@ -872,27 +746,21 @@ export async function initUI(_printer, _limiter, _scheduler) {
   // );
   
   if (!_printer) {
-    logerror("FATAL error: no liveprinter object in gui init()!");
+    logError("FATAL error: no liveprinter object in gui init()!");
     return;
   } else {
     printer = _printer;
   }
   
-  // we can use our own, or the one passed in
-  if (!_scheduler) scheduler = new Scheduler();
-  else scheduler = _scheduler;
   
   if (!_limiter) throw new Error("No Limiter for GUI!");
   
   ///--------------------------------------
   ///---------setup GUI--------------------
   ///--------------------------------------
-  /**
-  * build examples loader links for dynamically loading example files
-  * @memberOf LivePrinter
-  */
+
   
-  $("#connect-btn").on("click", async function (e) {
+  document.getElementById("connect-btn").addEventListener("click", async function (e) {
     e.preventDefault();
     
     info("OPENING SERIAL PORT");
@@ -901,27 +769,26 @@ export async function initUI(_printer, _limiter, _scheduler) {
       e.namespace !== undefined && e.namespace === ""
     );
     if (notCalledFromCode) {
-      const me = $(this);
-      const connected = me.hasClass("active"); // because it becomes active *after* a push
+      const me = e.currentTarget;
+      const connected = me.classList.contains("active"); // because it becomes active *after* a push
       
       // try disconnect
       if (connected) {
-        const selectedPort = $("#serial-ports-list .active");
-        if (selectedPort.length > 0) {
-          info("Closing open port " + selectedPort.html());
+        const selectedPort = document.querySelector("#serial-ports-list .active");
+        if (selectedPort) {
+          info("Closing open port " + selectedPort.textContent);
           
           const response = await closeSerialPort();
           
           // returns true ifsuccessful or false otherwise
           if (response) {
-            me.text("connect");
-            $("#serial-ports-list > button")
-            .removeClass("active")
-            .removeClass("disabled");
-            $("#baudrates-list > button").removeClass("disabled");
+            me.textContent = "connect";
+            me.classList.remove("active");
+            document.querySelectorAll("#serial-ports-list > li > a").forEach(btn => btn.classList.remove("active", "disabled"));
+            document.querySelectorAll("#baudrates-list > button").forEach(btn => btn.classList.remove("disabled"));
             
             // this is how we check if connected!
-            $("#header").removeClass("blinkgreen");
+            document.getElementById("header")?.classList.remove("blinkgreen");
           } else {
             errorHandler.error({
               time: Date.now(),
@@ -930,20 +797,22 @@ export async function initUI(_printer, _limiter, _scheduler) {
           }
         }
       } else {
-        const selectedPort = $("#serial-ports-list .active");
-        if (selectedPort.length < 1) {
-          me.removeClass("active");
+        const selectedPort = document.querySelector("#serial-ports-list .active");
+        if (!selectedPort) {
+          me.classList.remove("active");
         } else {
-          info("Opening port " + selectedPort.html());
-          me.text("disconnect");
+          info("Opening port " + selectedPort.textContent);
+          me.textContent = "disconnect";
           selectedPort.click(); // trigger connection using active port
           // add gcodeHandler
           lp.addGCodeListener({
             gcodeEvent: sendAndHandleGCode,
           });
           
-          $('#vp-btn').addClass('disabled');
-          $('#vp-btn').off('click');
+          const vpBtn = document.getElementById('vp-btn');
+          const newVpBtn = vpBtn.cloneNode(true);
+          vpBtn.parentNode.replaceChild(newVpBtn, vpBtn);
+          newVpBtn.classList.add('disabled');
         }
       }
     }
@@ -952,130 +821,123 @@ export async function initUI(_printer, _limiter, _scheduler) {
   //
   // redirect error to browser GUI
   //
-  $(window).on("error", function (evt) {
+  window.addEventListener("error", function (evt) {
     //Logger.debug("jQuery error event:");
     //Logger.debug(evt);
     
-    const e = evt.originalEvent.error; // get the javascript event
+    const e = evt.error; // get the javascript event
     //Logger.debug("original event:", e);
     guiError(e);
   });
   
   // temperature buttons
-  $("#basic-addon-tempbed").on("click", async () =>
-    printer.bed(parseFloat($("input[name=tempbed]")[0].value))
-);
-$("#basic-addon-temphot").on("click", async () =>
-  printer.temp(parseFloat($("input[name=temphot]")[0].value))
-);
+  document.getElementById("basic-addon-tempbed").addEventListener("click", async () =>
+    printer.bed(parseFloat(document.querySelector("input[name=tempbed]").value))
+  );
+  document.getElementById("basic-addon-temphot").addEventListener("click", async () =>
+    printer.temp(parseFloat(document.querySelector("input[name=temphot]").value))
+  );
 
-$("#basic-addon-angle").on("click", () =>
-  printer.turnto(parseFloat($("input[name=angle]")[0].value))
-);
+  document.getElementById("basic-addon-angle").addEventListener("click", () =>
+    printer.turnto(parseFloat(document.querySelector("input[name=angle]").value))
+  );
 
-$("#basic-addon-retract").on(
-  "click",
-  () =>
-    (printer.currentRetraction = parseFloat(
-    $("input[name=retract]")[0].value
-  ))
-);
+  document.getElementById("basic-addon-retract").addEventListener(
+    "click",
+    () =>
+      (printer.currentRetraction = parseFloat(
+      document.querySelector("input[name=retract]").value
+    ))
+  );
 
-$("#refresh-serial-ports-btn").on("click", async function (e) {
-  e.preventDefault();
-  if (!this.working) {
-    this.working = true;
-  } else {
-    info("Getting serial ports...");
+  document.getElementById("refresh-serial-ports-btn").addEventListener("click", async function (e) {
+    e.preventDefault();
+    if (!this.working) {
+      this.working = true;
+      info("Getting serial ports...");
     
-    try {
-      const portsList = await getSerialPorts();
-      await portsListHandler(portsList);
-    } catch (err) {
-      guiError(err);
-    }
+      try {
+        const portsList = await getSerialPorts();
+        await portsListHandler(portsList);
+      } catch (err) {
+        guiError(err);
+      }
     
-    this.working = false;
-  }
-  return true;
-});
-
-// disable form reloading on code compile
-$("form").submit(false);
-
-//hide tab-panel after codeMirror rendering (by removing the extra 'active' class)
-$(".hideAfterLoad").each(function () {
-  $(this).removeClass("active");
-});
-
-/// Clear printer queue on server
-$("#clear-btn").on("click", async ()=>{await limiter.stop(); limiter.init(); });
-
-const vpb = $('#vp-btn');
-
-vpb.on("click",  async (event) => {
-  const hdr = $("#header");
-  if (!hdr.hasClass("blinkgreen")) {
-    hdr.addClass("blinkgreen");
-    info('INIT SOUND');
-    try
-    { 
-      await initSound(printer);
+      this.working = false;
     }
-    catch(err) {
-      logerror(`Error initializing sound: ${err}`);
+    return true;
+  });
+
+  // disable form reloading on code compile
+  document.querySelectorAll("form").forEach(form => form.addEventListener('submit', e => e.preventDefault()));
+
+  //hide tab-panel after codeMirror rendering (by removing the extra 'active' class)
+  document.querySelectorAll(".hideAfterLoad").forEach(el => {
+    el.classList.remove("active");
+  });
+
+  const vpb = document.getElementById('vp-btn');
+
+  vpb.addEventListener("click",  async (event) => {
+    const hdr = document.getElementById("header");
+    if (!hdr.classList.contains("blinkgreen")) {
+      hdr.classList.add("blinkgreen");
+      info('INIT SOUND');
+      try
+      { 
+        await initSound(printer);
+      }
+      catch(err) {
+        logError(`Error initializing sound: ${err}`);
+      }
+      vpb.innerHTML = 'STOP VIRTUAL SERVER';
+    } 
+    else 
+      {
+      hdr.classList.remove("blinkgreen");
+      vpb.innerHTML = 'START VIRTUAL SERVER';
     }
-    vpb.html('STOP VIRTUAL SERVER');
-  } 
-  else 
-    {
-    hdr.removeClass("blinkgreen");
-    vpb.html('START VIRTUAL SERVER');
-  }
-});
+  });
 
-onPosition(async (v) => moveHandler(v));
-onCodeDone(async (v) => {
-  const dateStr = new Intl.DateTimeFormat("en-US", {
-    hour: "numeric",
-    minute: "numeric",
-    second: "numeric",
-    hour12: false,
-  }).format(new Date(Date.now()));
-  
-  let msg;
-  if (v.queued === 0) {
-    msg = `done: no code running [${dateStr}]`;
-  } else {
-    msg = `done: other code blocks in queue: ${v.queued} [${dateStr}]`;
-  }
-  document.getElementById("working-tab").innerHTML = msg;
-  blinkElem($("#working-tab"));
-  //loginfo(`done: code blocks running: ${v.queued}`);
-});
-onCodeQueued(async (v) => {
-  const dateStr = new Intl.DateTimeFormat("en-US", {
-    hour: "numeric",
-    minute: "numeric",
-    second: "numeric",
-    hour12: false,
-  }).format(new Date(Date.now()));
-  
-  document.getElementById(
-    "working-tab"
-  ).innerHTML = `queued: code block running (queued: ${v.queued}) [${dateStr}]`;
-  //loginfo(`queued: code blocks running: ${v.queued}`);
-});
+  onPosition(async (v) => moveHandler(v));
+  onCodeDone(async (v) => {
+    const dateStr = new Intl.DateTimeFormat("en-US", {
+      hour: "numeric",
+      minute: "numeric",
+      second: "numeric",
+      hour12: false,
+    }).format(new Date(Date.now()));
+    
+    let msg;
+    if (v.queued === 0) {
+      msg = `done: no code running [${dateStr}]`;
+    } else {
+      msg = `done: other code blocks in queue: ${v.queued} [${dateStr}]`;
+    }
+    const workingTab = document.getElementById("working-tab");
+    if (workingTab) {
+      workingTab.innerHTML = msg;
+      blinkElem(workingTab);
+    }
+    //loginfo(`done: code blocks running: ${v.queued}`);
+  });
+  onCodeQueued(async (v) => {
+    const dateStr = new Intl.DateTimeFormat("en-US", {
+      hour: "numeric",
+      minute: "numeric",
+      second: "numeric",
+      hour12: false,
+    }).format(new Date(Date.now()));
+    
+    const workingTab = document.getElementById("working-tab");
+    if (workingTab) {
+      workingTab.innerHTML = `queued: code block running (queued: ${v.queued}) [${dateStr}]`;
+    }
+    //loginfo(`queued: code blocks running: ${v.queued}`);
+  });
 
-// With the live server, this just blinks constantly...
-// liveprintercomms.onOk(async () => {
-  //     blinkElem($("#working-tab"));
-// });
-
-updatePrinterState(true);
-
-// get ports!
-await $("#refresh-serial-ports-btn").click();
+  // get ports!
+  document.getElementById("refresh-serial-ports-btn")?.click();
 }
 
 /**

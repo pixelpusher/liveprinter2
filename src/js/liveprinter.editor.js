@@ -11,7 +11,6 @@
 * @typicalname editors
 */
 
-import $ from "jquery";
 import * as gridlib from "gridlib";
 import { makeVisualiser } from "vizlib";
 import { buildEvaluateFunction, evalScope } from "./evaluate.mjs";
@@ -101,6 +100,7 @@ export async function initEditors(lp, _limiter) {
     
   };
   
+
   // add libraries, object namespaces, etc. to compilation environment (see @runCode)  
   evalScope(
     {
@@ -212,21 +212,64 @@ export async function initEditors(lp, _limiter) {
   
   const editors = [CodeEditor, CodeEditor2, CodeEditor3, globalThis.HistoryCodeEditor];
   
+  let activeEditor = CodeEditor; // Default to the first editor, which is active on load.
+
+
+/**
+   * For pop-up warnings etc. (see below)
+   */
+  const editorWarningModalEl = document.getElementById("editorWarningModal");
+  const editorWarningModal = new bootstrap.Modal(editorWarningModalEl, {
+    keyboard: false,
+    backdrop: "static",
+    focus: true
+  });
+
+  const confirmYesBtn = document.getElementById("warningYesBtn");
+
   ///----------------------------------------------------------
   ///------------Examples list---------------------------------
   ///----------------------------------------------------------
-  
-  let exList = $("#examples-list > .dropdown-item").not("[id*='session']");
-  exList.on("click", async function () {
-    const me = $(this);
-    const filename = me.data("link");
-    clearError(); // clear loading errors
-    $.ajax({ url: filename, dataType: "text" })
-    .done(function (content) {
-      // Future: Load content into editor
-    })
-    .fail(function () {
-      guiError("Error loading example file: " + filename);
+ /**
+  * build examples loader links for dynamically loading example files
+  * @memberOf LivePrinter
+  */
+
+  const exList = document.querySelectorAll("#examples-list > .dropdown-item:not([id*='session'])");
+  exList.forEach(item => {
+    item.addEventListener("click", (e) => {
+      e.preventDefault();
+      const me = e.currentTarget;
+      const filename = me.dataset.link;
+
+      const loadExample = async () => {
+        clearError(); // clear loading errors
+        try {
+          const response = await fetch(filename);
+          if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+          }
+          const content = await response.text();
+          if (activeEditor) {
+            activeEditor.value = content;
+          } else {
+            throw new Error("Trying to open example but no active editor!");
+          }
+        } catch (error) {
+          guiError(`Error loading example file: ${filename} - ${error.message}`);
+        } finally {
+          //clean up
+          confirmYesBtn.removeEventListener("click", yesHandler);
+          editorWarningModal.hide();
+        }
+      };
+
+      const yesHandler = () => loadExample();
+
+      confirmYesBtn.addEventListener("click", yesHandler, { once: true });
+      editorWarningModalEl.addEventListener("hidden.bs.modal", () => confirmYesBtn.removeEventListener("click", yesHandler), { once: true });
+
+      editorWarningModal.show();      
     });
   });
   
@@ -234,22 +277,59 @@ export async function initEditors(lp, _limiter) {
   ///------------GUI events------------------------------------
   ///----------------------------------------------------------
   
-  $('a[data-toggle="pill"]').on("shown.bs.tab", function (e) {
-    const target = $(e.target).attr("href"); // activated tab
-    if (target === "#history-code-editor-area") {
-      clearError();
-    } else if (target === "#code-editor-area") {
-      clearError();
-    } else if (target === "#gcode-editor-area") {
-      // visualiser
+  document.querySelectorAll('a[data-bs-toggle="pill"]').forEach(pill => pill.addEventListener("shown.bs.tab", (e) => {
+    const target = e.target.getAttribute("href"); // activated tab
+
+    // Keep track of the currently active editor and clear errors on tab switch
+    switch (target) {
+      case "#code-editor-area":
+        activeEditor = CodeEditor;
+        clearError();
+        break;
+      case "#code-editor-2-area":
+        activeEditor = CodeEditor2;
+        clearError();
+        break;
+      case "#code-editor-3-area":
+        activeEditor = CodeEditor3;
+        clearError();
+        break;
+      case "#history-code-editor-area":
+        activeEditor = globalThis.HistoryCodeEditor;
+        clearError();
+        break;
     }
-  });
+  }));
   
   /// extra compile button
-  $("#sendCode").on("click", () => runCode(CodeEditor.value));
+  document.querySelectorAll("#sendCode").forEach(btn => btn.addEventListener("click", () => runCode(activeEditor.value)));
   
-  /// download all code
-  $(".btn-download").on("click", async () => {
+  /// download active editor
+  document.querySelectorAll(".btn-download").forEach(btn => btn.addEventListener("click", async () => {
+    // add comment with date and time
+    const dateStr = "_" + getDateString().trim();
+    
+    let filename = "lp-download-"; // default
+    if (activeEditor && activeEditor.name) {
+        switch(activeEditor.name) {
+            case "CodeEditor":        filename = "lp-editor-1-"; break;
+            case "CodeEditor2":       filename = "lp-editor-2-"; break;
+            case "CodeEditor3":       filename = "lp-presets-"; break;
+            case "HistoryCodeEditor": filename = "lp-history-"; break;
+        }
+    }
+
+    if (activeEditor) {
+        await downloadFile(
+          activeEditor.value,
+          filename + dateStr + ".js",
+          "text/javascript"
+        );
+    }
+  }));
+  
+  /// download all editors
+  document.querySelectorAll(".btn-download-all").forEach(btn => btn.addEventListener("click", async () => {
     // add comment with date and time
     const dateStr = "_" + getDateString().trim();
     
@@ -269,11 +349,14 @@ export async function initEditors(lp, _limiter) {
       "text/javascript"
     );
     await downloadFile(
-      HistoryCodeEditor.value,
+      globalThis.HistoryCodeEditor.value,
       "lp-history-" + dateStr + ".js",
       "text/javascript"
     );
-  });
+  }));
+  
+  updateGUI(); // update state
   
   return;
+  // end initEditors
 }

@@ -3,7 +3,6 @@
  * @module EditorExecution
  */
 
-import $ from "jquery";
 import * as math from "mathjs";
 import { setDoError, debug, logError } from "./logging-utils.js";
 import { buildEvaluateFunction } from "./evaluate.mjs";
@@ -148,7 +147,7 @@ export async function runCode(code, immediate = false) {
   clearError();
   
   // if printer isn't connected, we shouldn't run!
-  const printerConnected = $("#header").hasClass("blinkgreen");
+  const printerConnected = document.getElementById("header")?.classList.contains("blinkgreen");
   if (!globalThis.virtualmode && !printerConnected) {
     historyAndGUIError(new Error(
       "Printer not connected! Please connect first using the printer settings tab."
@@ -192,7 +191,7 @@ export async function runCode(code, immediate = false) {
       }
       
       // blink the form
-      blinkElem($("form"));
+      document.querySelectorAll("form").forEach(form => blinkElem(form));
     } catch (err) {
       historyAndGUIError(err);
     }

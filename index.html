@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+﻿﻿﻿﻿<!DOCTYPE html>
 <html lang="en">
   <head>
     <meta charset="utf-8" />
@@ -12,24 +12,36 @@
     <!-- CodeMirror 6 is imported as ESM in main.js -->
     <!-- <link rel="stylesheet" href="/style/codemirror_all.css" type="text/css"> -->
 
-    <!-- Bootstrap 3 -->
-    <link
-      rel="stylesheet"
-      href="./src/style/bootstrap.min.css"
-      type="text/css"
-    />
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB" crossorigin="anonymous">
     <link rel="stylesheet" href="./src/style/liveprinter.css" type="text/css" />
+
+    <!-- Bootstrap 5 JS (includes Popper) -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js" integrity="FKyoEForCGlyvwx9Hj09JcYn3nv7wiPVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI" crossorigin="anonymous"></script>
 
     <!-- main code -->
     <script src="./src/js/main.js" type="module"></script>
-
-    <script src="./src/js/lib/jquery-3.7.1.min.js"></script>
-    <script
-      src="./src/js/lib/bootstrap/bootstrap.bundle.js"
-      type="text/javascript"
-    ></script>
   </head>
   <body>
+
+  <div id="editorWarningModal" class="modal" tabindex="-1">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">Warning!</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <p>This will replace all code in the current editor! Proceed or not?</p>
+        </div>
+        <div class="modal-footer">
+          <button id="warningYesBtn" type="button" class="btn btn-primary">Yes</button>
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">No</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
     <!-- <div class="lines"></div> -->
     <div class="container" id="body">
       <div id="row">
@@ -52,7 +64,7 @@
                 <a
                   id="printer-tab"
                   class="flex-sm-fill text-sm-center nav-link active lightnav"
-                  data-toggle="pill"
+                  data-bs-toggle="pill"
                   href="#printer"
                   role="tab"
                   aria-controls="printer"
@@ -64,7 +76,7 @@
                 <a
                   id="gcode-editor-tab"
                   class="flex-sm-fill text-sm-center nav-link lightnav"
-                  data-toggle="pill"
+                  data-bs-toggle="pill"
                   href="#gcode-editor-area"
                   role="tab"
                   aria-controls="gcode-editor-area"
@@ -76,7 +88,7 @@
                 <a
                   id="history-editor-tab"
                   class="flex-sm-fill text-sm-center nav-link lightnav"
-                  data-toggle="pill"
+                  data-bs-toggle="pill"
                   href="#history-code-editor-area"
                   role="tab"
                   aria-controls="history-code-editor-area"
@@ -88,7 +100,7 @@
                 <a
                   id="editor-3-tab"
                   class="flex-sm-fill text-sm-center nav-link lightnav"
-                  data-toggle="pill"
+                  data-bs-toggle="pill"
                   href="#code-editor-3-area"
                   role="tab"
                   aria-controls="code-editor-3-area"
@@ -100,7 +112,7 @@
                 <a
                   id="editor-2-tab"
                   class="flex-sm-fill text-sm-center nav-link lightnav"
-                  data-toggle="pill"
+                  data-bs-toggle="pill"
                   href="#code-editor-2-area"
                   role="tab"
                   aria-controls="code-editor-2-area"
@@ -112,7 +124,7 @@
                 <a
                   id="editor-tab"
                   class="flex-sm-fill text-sm-center nav-link lightnav"
-                  data-toggle="pill"
+                  data-bs-toggle="pill"
                   href="#code-editor-area"
                   role="tab"
                   aria-controls="code-editor-area"
@@ -122,12 +134,12 @@
                 <a
                   id="examples-dropdown"
                   class="flex-sm-fill text-sm-center nav-link lightnav active dropdown-toggle dropdown-toggle-split"
-                  data-toggle="dropdown"
+                  data-bs-toggle="dropdown"
                   aria-haspopup="true"
                   aria-expanded="false"
                   role="tab"
                 >
-                  <span class="sr-only">Toggle Dropdown</span>
+                  <span class="sr-only">Examples</span>
                 </a>
                 <div id="examples-list" class="dropdown-menu">
                   <a
@@ -238,7 +250,7 @@
                 <a
                   id="working-tab"
                   class="flex-sm-fill text-sm-center nav-link lightnav"
-                  data-toggle="pill"
+                  data-bs-toggle="pill"
                   href="#"
                   role="tab"
                   aria-selected="false"
@@ -252,11 +264,9 @@
                 <div class="row">
                   <div class="col-md-1">
                     <div class="input-group input-group-sm mb-2">
-                      <div class="input-group-prepend">
-                        <span class="input-group-text" id="basic-addon-x"
-                          >x</span
-                        >
-                      </div>
+                      <span class="input-group-text" id="basic-addon-x"
+                        >x</span
+                      >
                       <input
                         name="x"
                         type="text"
@@ -269,11 +279,9 @@
                   </div>
                   <div class="col-md-1">
                     <div class="input-group input-group-sm mb-2">
-                      <div class="input-group-prepend">
-                        <span class="input-group-text" id="basic-addon-y"
-                          >y</span
-                        >
-                      </div>
+                      <span class="input-group-text" id="basic-addon-y"
+                        >y</span
+                      >
                       <input
                         name="y"
                         type="text"
@@ -286,11 +294,9 @@
                   </div>
                   <div class="col-md-1">
                     <div class="input-group input-group-sm mb-2">
-                      <div class="input-group-prepend">
-                        <span class="input-group-text" id="basic-addon-z"
-                          >z</span
-                        >
-                      </div>
+                      <span class="input-group-text" id="basic-addon-z"
+                        >z</span
+                      >
                       <input
                         name="z"
                         type="text"
@@ -303,11 +309,9 @@
                   </div>
                   <div class="col-md-1">
                     <div class="input-group input-group-sm mb-2">
-                      <div class="input-group-prepend">
-                        <span class="input-group-text" id="basic-addon-e"
-                          >e</span
-                        >
-                      </div>
+                      <span class="input-group-text" id="basic-addon-e"
+                        >e</span
+                      >
                       <input
                         name="e"
                         type="text"
@@ -320,11 +324,9 @@
                   </div>
                   <div class="col-md-2">
                     <div class="input-group input-group-sm mb-2">
-                      <div class="input-group-prepend">
-                        <span class="input-group-text" id="basic-addon-x"
-                          >time</span
-                        >
-                      </div>
+                      <span class="input-group-text" id="basic-addon-x"
+                        >time</span
+                      >
                       <input
                         name="time"
                         type="text"
@@ -337,11 +339,9 @@
                   </div>
                   <div class="col-md-2">
                     <div class="input-group input-group-sm mb-2">
-                      <div class="input-group-prepend">
-                        <span class="input-group-text" id="basic-addon-speed"
-                          >speed</span
-                        >
-                      </div>
+                      <span class="input-group-text" id="basic-addon-speed"
+                        >speed</span
+                      >
                       <input
                         name="speed"
                         type="text"
@@ -354,15 +354,13 @@
                   </div>
                   <div class="col-md-2">
                     <div class="input-group input-group-sm mb-3">
-                      <div class="input-group-prepend">
-                        <button
-                          class="btn btn-secondary"
-                          id="basic-addon-angle"
-                          type="button"
-                        >
-                          turn
-                        </button>
-                      </div>
+                      <button
+                        class="btn btn-secondary"
+                        id="basic-addon-angle"
+                        type="button"
+                      >
+                        turn
+                      </button>
                       <input
                         name="angle"
                         type="text"
@@ -387,15 +385,13 @@
                 <div class="row">
                   <div class="col-md-3">
                     <div class="input-group input-group-sm mb-3">
-                      <div class="input-group-prepend">
-                        <button
-                          class="btn btn-secondary"
-                          id="basic-addon-temphot"
-                          type="button"
-                        >
-                          head temp
-                        </button>
-                      </div>
+                      <button
+                        class="btn btn-secondary"
+                        id="basic-addon-temphot"
+                        type="button"
+                      >
+                        head temp
+                      </button>
                       <input
                         name="temphot"
                         type="text"
@@ -417,15 +413,13 @@
                   </div>
                   <div class="col-md-3">
                     <div class="input-group input-group-sm mb-3">
-                      <div class="input-group-prepend">
-                        <button
-                          class="btn btn-secondary"
-                          id="basic-addon-tempbed"
-                          type="button"
-                        >
-                          bed temp
-                        </button>
-                      </div>
+                      <button
+                        class="btn btn-secondary"
+                        id="basic-addon-tempbed"
+                        type="button"
+                      >
+                        bed temp
+                      </button>
                       <input
                         name="tempbed"
                         type="text"
@@ -448,15 +442,13 @@
 
                   <div class="col-md-2">
                     <div class="input-group input-group-sm mb-3">
-                      <div class="input-group-prepend">
-                        <button
-                          class="btn btn-secondary"
-                          id="basic-addon-retract"
-                          type="button"
-                        >
-                          retract
-                        </button>
-                      </div>
+                      <button
+                        class="btn btn-secondary"
+                        id="basic-addon-retract"
+                        type="button"
+                      >
+                        retract
+                      </button>
                       <input
                         name="retract"
                         type="text"
@@ -491,29 +483,8 @@
                   </div>
                 </div>
                 
-                <!-- <div class="row">
-                  <div class="col-md-3">
-                    <button
-                      id="temp-display-btn"
-                      class="btn-sm btn-primary"
-                      data-toggle="button"
-                    >
-                      Poll Temperature
-                    </button>
-                  </div>
-                  <div class="col-md-3">
-                    <button
-                      id="log-requests-btn"
-                      class="btn-sm btn-primary"
-                      data-toggle="button"
-                    >
-                      Display ajax requests
-                    </button>
-                  </div>
-                </div> -->
                 <div class="row">
                   <div class="col-md-4">
-                    <div class="col-md-3">
                       <button
                         id="refresh-serial-ports-btn"
                         class="btn btn-sm btn-primary"
@@ -521,18 +492,16 @@
                       >
                         Refresh Ports
                       </button>
-                    </div>
                     <div class="btn-group">
                       <button
                         type="button"
                         id="serial-port-dropdown"
-                        class="btn btn-sm dropdown-toggle"
-                        data-toggle="dropdown"
+                        class="btn btn-sm btn-secondary dropdown-toggle"
+                        data-bs-toggle="dropdown"
                         aria-haspopup="true"
                         aria-expanded="false"
                       >
                         Choose printer port:
-                        <span class="caret"></span>
                       </button>
                       <ul
                         id="serial-ports-list"
@@ -547,7 +516,7 @@
                         class="btn btn-sm btn-secondary dropdown-toggle"
                         type="button"
                         id="baudrate-dropdown"
-                        data-toggle="dropdown"
+                        data-bs-toggle="dropdown"
                         aria-haspopup="true"
                         aria-expanded="false"
                       >
@@ -565,7 +534,6 @@
                       id="connect-btn"
                       type="button"
                       class="btn btn-sm btn-warning"
-                      data-toggle="button"
                       aria-pressed="false"
                       autocomplete="off"
                     >
@@ -578,7 +546,7 @@
                         class="btn btn-sm btn-secondary dropdown-toggle"
                         type="button"
                         id="gcodelevel-dropdown"
-                        data-toggle="dropdown"
+                        data-bs-toggle="dropdown"
                         aria-haspopup="true"
                         aria-expanded="false"
                       >
@@ -626,10 +594,11 @@
                     </button>
                     them
                   </div>
-                  <div class="col-md-2 instructions-panel">
-                    <button class="btn btn-success btn-sm btn-download">
-                      download
-                    </button>
+                  <div class="col-md-4 instructions-panel">
+                    <div class="btn-group btn-group-sm" role="group">
+                      <button type="button" class="btn btn-success btn-download">download</button>
+                      <button type="button" class="btn btn-info btn-download-all">all</button>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -662,7 +631,7 @@
                 </div>
                 <div class="row">
                   <div class="col-md-2 instructions-panel"></div>
-                  <div class="col-md-8 instructions-panel">
+                  <div class="col-md-7 instructions-panel">
                     Highlight lines of code and hit <kbd>cmd</kbd> or
                     <kbd>ctrl</kbd>-<kbd>enter</kbd> to
                     <button id="sendCode" class="btn btn-success btn-sm">
@@ -670,10 +639,11 @@
                     </button>
                     them
                   </div>
-                  <div class="col-md-2 instructions-panel">
-                    <button class="btn btn-success btn-sm btn-download">
-                      download
-                    </button>
+                  <div class="col-md-3 instructions-panel">
+                    <div class="btn-group btn-group-sm" role="group">
+                      <button type="button" class="btn btn-success btn-download">download</button>
+                      <button type="button" class="btn btn-info btn-download-all">all</button>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -705,7 +675,7 @@
                 </div>
                 <div class="row">
                   <div class="col-md-2 instructions-panel"></div>
-                  <div class="col-md-8 instructions-panel">
+                  <div class="col-md-7 instructions-panel">
                     Highlight lines of code and hit <kbd>cmd</kbd> or
                     <kbd>ctrl</kbd>-<kbd>enter</kbd> to
                     <button id="sendCode" class="btn btn-success btn-sm">
@@ -713,10 +683,11 @@
                     </button>
                     them
                   </div>
-                  <div class="col-md-2 instructions-panel">
-                    <button class="btn btn-success btn-sm btn-download">
-                      download
-                    </button>
+                  <div class="col-md-3 instructions-panel">
+                    <div class="btn-group btn-group-sm" role="group">
+                      <button type="button" class="btn btn-success btn-download">download</button>
+                      <button type="button" class="btn btn-info btn-download-all">all</button>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -748,7 +719,7 @@
                 </div>
                 <div class="row">
                   <div class="col-md-2 instructions-panel"></div>
-                  <div class="col-md-8 instructions-panel">
+                  <div class="col-md-7 instructions-panel">
                     Highlight lines of code and hit <kbd>cmd</kbd> or
                     <kbd>ctrl</kbd>-<kbd>enter</kbd> to
                     <button id="sendCode" class="btn btn-success btn-sm">
@@ -756,10 +727,11 @@
                     </button>
                     them
                   </div>
-                  <div class="col-md-2 instructions-panel">
-                    <button class="btn btn-success btn-sm btn-download">
-                      download
-                    </button>
+                  <div class="col-md-3 instructions-panel">
+                    <div class="btn-group btn-group-sm" role="group">
+                      <button type="button" class="btn btn-success btn-download">download</button>
+                      <button type="button" class="btn btn-info btn-download-all">all</button>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -786,7 +758,7 @@
                 </div>
                 <div class="row">
                   <div class="col-md-2 instructions-panel"></div>
-                  <div class="col-md-8 instructions-panel">
+                  <div class="col-md-7 instructions-panel">
                     Highlight lines of code and hit <kbd>cmd</kbd> or
                     <kbd>ctrl</kbd>-<kbd>enter</kbd> to
                     <button id="sendCode" class="btn btn-success btn-sm">
@@ -794,10 +766,11 @@
                     </button>
                     them
                   </div>
-                  <div class="col-md-2 instructions-panel">
-                    <button class="btn btn-success btn-sm btn-download">
-                      download
-                    </button>
+                  <div class="col-md-3 instructions-panel">
+                    <div class="btn-group btn-group-sm" role="group">
+                      <button type="button" class="btn btn-success btn-download">download</button>
+                      <button type="button" class="btn btn-info btn-download-all">all</button>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -821,7 +794,7 @@
                   <a
                     class="flex-sm-fill text-sm-center nav-link active"
                     id="info-tab"
-                    data-toggle="pill"
+                    data-bs-toggle="pill"
                     href="#info"
                     role="tab"
                     aria-controls="info"
@@ -833,7 +806,7 @@
                   <a
                     class="nav-link"
                     id="errors-tab hidden"
-                    data-toggle="pill"
+                    data-bs-toggle="pill"
                     href="#errors"
                     role="tab"
                     aria-controls="errors"
@@ -845,7 +818,7 @@
                   <a
                     class="nav-link hidden"
                     id="commands-tab"
-                    data-toggle="pill"
+                    data-bs-toggle="pill"
                     href="#commands"
                     role="tab"
                     aria-controls="errors"
@@ -856,7 +829,7 @@
                 <li class="flex-sm-fill text-sm-center nav-item dropdown">
                   <a
                     class="nav-link dropdown-toggle"
-                    data-toggle="dropdown"
+                    data-bs-toggle="dropdown"
                     href="#"
                     role="button"
                     aria-haspopup="true"
@@ -878,7 +851,7 @@
                 <li class="flex-sm-fill text-sm-center nav-item dropdown">
                   <a
                     class="nav-link dropdown-toggle"
-                    data-toggle="dropdown"
+                    data-bs-toggle="dropdown"
                     href="#"
                     role="button"
                     aria-haspopup="true"
@@ -889,19 +862,19 @@
                     <a
                       class="dropdown-item flex-sm-fill text-sm-left"
                       href="#"
-                      onclick="$('#info > ul').empty();"
+                      onclick="document.querySelector('#info > ul').innerHTML = '';"
                       >clear info</a
                     >
                     <a
                       class="dropdown-item flex-sm-fill text-sm-left"
                       href="#"
-                      onclick="$('#errors > ul').empty();"
+                      onclick="document.querySelector('#errors > ul').innerHTML = '';"
                       >clear errors</a
                     >
                     <a
                       class="dropdown-item flex-sm-fill text-sm-left"
                       href="#"
-                      onclick="$('#commands > ul').empty();"
+                      onclick="document.querySelector('#commands > ul').innerHTML = '';"
                       >clear commands</a
                     >
                   </div>
