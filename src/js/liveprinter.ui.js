@@ -53,6 +53,10 @@ import {
   onPosition,
 } from "./liveprinter.listeners.js";
 
+import { initHelpModal } from "./liveprinter.help.js";
+
+import { runCode } from "./liveprinter.editor-exec.js"
+
 /**
 * Milliseconds to hours minutes seconds string
 * @param {Number} ms milliseconds 
@@ -156,27 +160,6 @@ export function guiError(e) {
   }
   Logger.error(e);
 }
-
-/*
-Logger.debug("SyntaxError? " + (e instanceof SyntaxError)); // true
-Logger.debug(e); // true
-Logger.debug("SyntaxError? " + (e instanceof SyntaxError)); // true
-Logger.debug("ReferenceError? " + (e instanceof ReferenceError)); // true
-Logger.debug(e.message);                // "missing ; before statement"
-Logger.debug(e.name);                   // "SyntaxError"
-Logger.debug(e.fileName);               // "Scratchpad/1"
-Logger.debug(e.lineNumber);             // 1
-Logger.debug(e.columnNumber);           // 4
-Logger.debug(e.stack);                  // "@Scratchpad/1:2:3\n"
-*/
-
-// this sucked because of coding... jst highlight instead!
-/*
-if (e.lineNumber) {
-// remember that syntax errors start at line 1 which is line 0 in CodeMirror!
-CodeEditor.setSelection({ line: (e.lineNumber-1), ch: e.columnNumber }, { line: (e.lineNumber-1), ch: (e.columnNumber + 1) });
-}
-*/
 
 /**
 * Parse temperature response from printer firmware (Marlin)
@@ -548,6 +531,14 @@ export const printerStateHandler = function (stateEvent) {
 const maxLogPopups = 80;
 
 /**
+ * Is this is virtual mode?
+ * @returns {Boolean}
+ */
+export function isVirtualMode() {
+  return document.getElementById("vp-btn").dataset.running;
+}
+
+/**
 * Append a dismissible, styled text node to one of the side menus, formatted appropriately.
 * @param {HTMLElement} elem DOM element to append this to
 * @param {String} message message text for new element
@@ -758,8 +749,13 @@ export async function initUI(_printer, _limiter) {
   ///--------------------------------------
   ///---------setup GUI--------------------
   ///--------------------------------------
-
   
+  /**
+   * insert quick help after examples list
+   */
+  initHelpModal('examples-dropdown');
+
+
   document.getElementById("connect-btn").addEventListener("click", async function (e) {
     e.preventDefault();
     
@@ -890,12 +886,15 @@ export async function initUI(_printer, _limiter) {
       catch(err) {
         logError(`Error initializing sound: ${err}`);
       }
+      vpb.dataset.running = true;
+      runCode('delay(true);'); // set delay
       vpb.innerHTML = 'STOP VIRTUAL SERVER';
     } 
     else 
       {
       hdr.classList.remove("blinkgreen");
       vpb.innerHTML = 'START VIRTUAL SERVER';
+      vpb.dataset.running = false;
     }
   });
 
@@ -937,7 +936,10 @@ export async function initUI(_printer, _limiter) {
   });
 
   // get ports!
-  document.getElementById("refresh-serial-ports-btn")?.click();
+  if (!isVirtualMode())
+  {
+    document.getElementById("refresh-serial-ports-btn")?.click();
+  }
 }
 
 /**

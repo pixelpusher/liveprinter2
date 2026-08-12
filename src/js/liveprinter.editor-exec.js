@@ -51,10 +51,10 @@ export function recordCode(code) {
 }
 
 /**
- * Log GCode to history window
+ * Log GCode to editor window
  * @param {Array | String} gcode
  */
-export function recordGCode(gcode) {
+export function recordGCode(gcode, editor) {
   if (!globalThis.HistoryCodeEditor) return;
   
   // add comment with date and time
@@ -62,11 +62,11 @@ export function recordGCode(gcode) {
   
   const gcodeArray = Array.isArray(gcode) ? gcode : [gcode];
   // ignore temperature or other info commands - no need to save these!
-  const usefulGCode = gcodeArray.filter((_gcode) => !/M114|M105/.test(_gcode));
+  const usefulGCode = gcodeArray.filter((_gcode) => _gcode.trim() && !/M114|M105/.test(_gcode.trim()));
   
-  const gcodeText = "# dateStr\n" + usefulGCode.join("\n");
-  
-  globalThis.HistoryCodeEditor.append(gcodeText + '\n');
+  // const gcodeText = `# ${dateStr}${usefulGCode.join("\n")}\n`;
+  const gcodeText = `${usefulGCode.join("\n")}\n`;
+  editor.append(gcodeText);
 }
 
 /**

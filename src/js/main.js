@@ -62,11 +62,6 @@ import { Logger } from "liveprinter-utils";
 
   lp.addErrorListener({ errorEvent: doError });
 
-  ///
-  /// add GCode listener to capture compiles GCode to editor
-  // printer.addGCodeListener(
-  //     { gcodeEvent: async (gcode) => editors.recordGCode(editors.GCodeEditor, gcode) }
-  // );
 })().catch((err) => {
   console.error(err);
 });

@@ -24,9 +24,10 @@ import {
   clearError, 
   updateGUI, 
   info, 
-  guiError 
+  guiError,
+  sendAndHandleGCode
 } from "./liveprinter.ui.js";
-import { runCode, recordCode, setLimiter } from "./liveprinter.editor-exec.js";
+import { runCode, recordCode, setLimiter, recordGCode } from "./liveprinter.editor-exec.js";
 import { parseStrudel as uzu } from "lp-language";
 import { setSynthAttack, setSynthRelease } from "./sound.js"
 
@@ -136,6 +137,22 @@ export async function initEditors(lp, _limiter) {
     gridlib
   );
   
+  /**
+   * Setup gcode listener
+   */
+
+  globalThis.logGCode = false;
+  
+  const GCodeListener = {
+    gcodeEvent: gcode => { if (globalThis.logGCode) recordGCode(gcode, GCodeEditor) },
+  };
+  lp.addGCodeListener(GCodeListener);
+
+
+  /**
+   * Timeline progress listeners from gridlib
+   */
+
   const shapeProgressElem = document.getElementById("shape-progress");
   const timelineProgressElem = document.getElementById("timeline-progress");
   
@@ -208,6 +225,13 @@ export async function initEditors(lp, _limiter) {
     value: localStorage.getItem("CodeEditor3") || presetscode,
     el: document.querySelector("#code-editor-3"),
     onRun: runCode,
+  });
+
+  const GCodeEditor = createCodeMirrorEditor({
+    id: "GCodeEditor",
+    value: localStorage.getItem("GCodeEditor") || "# gcode editor",
+    el: document.querySelector("#gcode-editor"),
+    onRun: sendAndHandleGCode,
   });
   
   // Initialize HistoryCodeEditor as a global so it can be used by the execution module
@@ -302,6 +326,10 @@ export async function initEditors(lp, _limiter) {
         activeEditor = CodeEditor3;
         clearError();
         break;
+      case "#gcode-editor-area":
+        activeEditor = GCodeEditor;
+        clearError();
+        break;  
       case "#history-code-editor-area":
         activeEditor = globalThis.HistoryCodeEditor;
         clearError();
@@ -323,6 +351,7 @@ export async function initEditors(lp, _limiter) {
             case "CodeEditor":        filename = "lp-editor-1-"; break;
             case "CodeEditor2":       filename = "lp-editor-2-"; break;
             case "CodeEditor3":       filename = "lp-presets-"; break;
+            case "GCodeEditor":       filename = "lp-gcode-"; break;
             case "HistoryCodeEditor": filename = "lp-history-"; break;
         }
     }

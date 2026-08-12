@@ -24,8 +24,12 @@ import {
   logError,
   logPrinterState,
   logCommands,
+  doError,
 } from "./logging-utils.js";
 import Logger from "liveprinter-utils/logger";
+
+import { isVirtualMode } from "./liveprinter.ui.js";
+
 
 export const remotePort = 8888; // port for server, might be different that url if testing
 
@@ -58,6 +62,9 @@ vars.requestId = 0;
  */
 
 export async function sendJSONRPC(request) {
+  
+  if (isVirtualMode()) return; // don't send
+
   //debug(request)
   let args = typeof request === "string" ? JSON.parse(request) : request;
   //args._xsrf = getCookie("_xsrf");
@@ -438,27 +445,3 @@ export async function sendGCodeRPC(gcode) {
     }
   }
 }
-
-/**
- * Schedule GCode to be sent to the server, in order, using the limiter via json-rpc over ajax.
- * @param {string} gcode gcode to send
- * @param {Integer} priority Priority in queue (0-9 where 0 is highest)
- * @alias comms:scheduleGCode
- * @returns {Object} result Returns json promise object containing printer response
- */
-// export async function scheduleGCode(gcode, priority = 4) {
-//   // 0-9, lower higher
-//   const reqId = "req" + vars.requestId++;
-
-//   let result = null; // result to be handled later -- see handleGCodeResponse
-
-//   if (vars.logAjax) logCommands(`SENDING ${reqId}`);
-//   return scheduleFunction(
-//     { priority: priority, weight: 1, id: reqId, expiration: maxCodeWaitTime },
-//     async () => {
-//       result = await sendGCodeRPC(gcode);
-//       if (vars.logAjax) logCommands(`RECEIVED ${reqId}`);
-//       return result;
-//     }
-//   );
-// }
