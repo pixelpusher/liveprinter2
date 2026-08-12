@@ -53,7 +53,9 @@ export const drawCommands = async function ({commandsIter, melody, angleMap}) {
 
   switch (nextCommand.value) {
     case 'F':
+    case 'L':
     case 'A':
+    case 'B':
       //info('F or A');
     if (note == "-" || note == "0") {
       await printer.wait(duration);

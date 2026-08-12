@@ -623,10 +623,8 @@ a.graylink,
 
 .form-control-sm,
 .input-group-sm > .form-control,
-.input-group-sm > .input-group-append > .btn,
-.input-group-sm > .input-group-append > .input-group-text,
-.input-group-sm > .input-group-prepend > .btn,
-.input-group-sm > .input-group-prepend > .input-group-text {
+.input-group-sm > .btn,
+.input-group-sm > .input-group-text {
   padding: 0.025rem 0.02rem;
   font-size: 0.45rem;
   background-color: #181818;
@@ -767,4 +765,67 @@ a.graylink,
 
 .hidden {
   display: none;
+}
+
+/* Custom dark modal styling */
+#editorWarningModal .modal-content {
+  background-color: #181818;
+  color: #f8f9fa; /* light gray/white */
+  border: 1px solid #444;
+}
+
+#editorWarningModal .modal-header {
+  border-bottom: 1px solid #444;
+}
+
+#editorWarningModal .modal-footer {
+  border-top: 1px solid #444;
+}
+
+#editorWarningModal .btn-close {
+  filter: invert(1) grayscale(100%) brightness(200%);
+}
+
+/* Custom dark modal button styling */
+#editorWarningModal .btn-secondary {
+  background-color: #343a40;
+  border-color: #495057;
+}
+
+#editorWarningModal .btn-secondary:hover {
+  background-color: #495057;
+  border-color: #6c757d;
+}
+
+#editorWarningModal .btn-primary {
+  background-color: #0e8c02; /* A dark, muted red for the confirmation action */
+  border-color: #186108;
+}
+#editorWarningModal .btn-primary:hover {
+  background-color: #45d645;
+  border-color: #29671e;
+}
+
+/* Dropdown menu dark theme */
+.dropdown-menu {
+  background-color: #212529; /* Dark background */
+  border: 1px solid #495057;
+}
+
+.dropdown-item {
+  color: #f8f9fa; /* Light text */
+}
+
+.dropdown-item:hover, .dropdown-item:focus {
+  color: #fff;
+  background-color: #495057; /* Darker hover */
+}
+
+.dropdown-divider {
+    border-top: 1px solid #495057;
+}
+
+/* Ensure buttons inside input groups have white text to override defaults */
+.input-group > .btn {
+  color: #fff;
 }

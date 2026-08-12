@@ -1,37 +1,19 @@
-// draw the algorave logo
-lp.start(195);
 
-lp.sync();
-lp.extrude({ e: 14, speed: 10 });
-lp.downto(lp.layerHeight);
+delay(true);
 
-lp.moveto({ x: 60, y: lp.cy - 8 });
-lp.speed(45);
-let gap = 4;
-let forwards = 120;
-let backwards = -120;
+reset();
 
-// 2 layers
-for (let i of numrange(0, 1)) {
-    lp.moveto({ x: 60, y: lp.cy - 8 });
-    lp.turnto(0);
+let d = 60;
 
-    let d = 110;
-    //lp.dist(d).go(1);
-    //also use plain fillDirection for other results
+# moveto x:lp.cx*0.6 y:lp.cy*0.45 speed:'g4' | turnto 30
 
-    lp.fillDirectionH(2.5, d, gap * lp.layerHeight, false);
-    lp.turn(backwards);
-
-    for (let ii of numrange(0, 12)) {
-        //also use plain fillDirection for other results
-        lp.fillDirectionH(2.5, d, gap * lp.layerHeight, false);
-        //lp.dist(d).go(1);
-        lp.turn(backwards);
-
-        d -= 8;
-    }
-    lp.up(lp.layerHeight);
-}
-lp.retract(12.5);
-lp.up(60);
+lp.loop{{
+    // square
+    # speed 'a5' | drawfill h:d w:1 hgap:2 | turn 120
+    lp._heading = lp._heading % (2*Math.PI);
+  
+    d *= 0.8;
+    
+    updateGUI();
+    if (d <= 6) # bail
+}}

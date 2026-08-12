@@ -66,14 +66,14 @@ function safeEvalFunction(code) {
  * @param {String} code Code to transpile and turn into an AsyncFunction object for later use
  * @param {Object} transpiler Transpiler object
  * @param {Object} transpilerOptions Options for transpiler like {errorHandler: function}
- * @returns {Object} Returns object of the form: { mode: "javascript", result: AsyncFunction, code: "transpiled code" }
+ * @returns {Object} Returns object of the form: { mode: "javascript", result: AsyncFunction, code: ''original code', newcode: "transpiled code" }
  */
 export async function buildEvaluateFunction(
   {
     code, transpiler, options
   },
 ) {
-  const result = { mode: "javascript", result: null, code };
+  const result = { mode: "javascript", result: null, code, newcode: '' };
   const errorHandler = (options?.errorHandler || guiError);
   try {
     // transform liveprinter grammar and javascript mix into javascript code

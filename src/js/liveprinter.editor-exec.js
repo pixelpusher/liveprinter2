@@ -3,7 +3,6 @@
  * @module EditorExecution
  */
 
-import $ from "jquery";
 import * as math from "mathjs";
 import { setDoError, debug, logError } from "./logging-utils.js";
 import { buildEvaluateFunction } from "./evaluate.mjs";
@@ -65,9 +64,9 @@ export function recordGCode(gcode) {
   // ignore temperature or other info commands - no need to save these!
   const usefulGCode = gcodeArray.filter((_gcode) => !/M114|M105/.test(_gcode));
   
-  const gcodeText = "\n" + dateStr + usefulGCode.join("\n");
+  const gcodeText = "# dateStr\n" + usefulGCode.join("\n");
   
-  globalThis.HistoryCodeEditor.append(gcodeText);
+  globalThis.HistoryCodeEditor.append(gcodeText + '\n');
 }
 
 /**
@@ -85,11 +84,16 @@ export function recordError(err) {
     codeText = "//" + dateStr + "// ERROR: " + err + (err.endsWith("\n") ? "" : "\n" + "\n");
   }
   else 
-    {
+  {
     // handle nested errors
     if (err.error !== undefined) err = err.error;
-    const lineNumber = err.lineNumber == null ? -1 : err.lineNumber;
-    codeText = "//" + dateStr + "// ERROR: " + err.name + ": " + err.message + " (line:" + lineNumber + ")\n";
+
+    codeText = "//" + dateStr + "//\tERROR:"
+      + `\n//\t${err.name}: ${err.message}`
+      + ((err.stack != null) 
+        ? `\n//\tSTACK:${err.stack.split('\n').filter(item => item.length > 0).map(item => `\n//\t\t${item.trim()}`)}` 
+        : '')
+      + '\n'; 
   }
   
   globalThis.HistoryCodeEditor.append(codeText);
@@ -143,18 +147,16 @@ export async function runCode(code, immediate = false) {
   clearError();
   
   // if printer isn't connected, we shouldn't run!
-  const printerConnected = $("#header").hasClass("blinkgreen");
+  const printerConnected = document.getElementById("header")?.classList.contains("blinkgreen");
   if (!globalThis.virtualmode && !printerConnected) {
-    const err = new Error(
+    historyAndGUIError(new Error(
       "Printer not connected! Please connect first using the printer settings tab."
-    );
-    historyAndGUIError(err);
-    throw err;
+    ));
   } else {
     if (Array.isArray(code)) {
       immediate = false;
     } else {
-      recordCode(code);
+      recordCode('//CODE:\n'+code);
     }
     
     clearError();
@@ -168,8 +170,11 @@ export async function runCode(code, immediate = false) {
       });
       const resultFunction = results.result;
       debug(
-        `Evaluated code[immediate]: ${JSON.stringify(results.code, null, 2)}`
+        `Evaluated code ${immediate ? '[immediate]' : ''}: ${results.newcode}`
       );
+
+      recordCode(`//EVALUATED${immediate ? '[immediate]': ''}${results.newcode}`);
+
       
       if (immediate) {
         try 
@@ -186,7 +191,7 @@ export async function runCode(code, immediate = false) {
       }
       
       // blink the form
-      blinkElem($("form"));
+      document.querySelectorAll("form").forEach(form => blinkElem(form));
     } catch (err) {
       historyAndGUIError(err);
     }

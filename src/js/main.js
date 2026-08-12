@@ -11,9 +11,6 @@ import { Limiter } from "./liveprinter.limiter.js";
 import { doError } from "./logging-utils.js";
 import { initEditors } from "./liveprinter.editor.js";
 import { Logger } from "liveprinter-utils";
-import $ from "jquery";
-
-globalThis.$ = globalThis.jquery = $;
 
 //require('./svg/SVGReader'); // svg util class
 //require('./svg/svg2gcode'); // svg gcode converter
@@ -21,7 +18,13 @@ globalThis.$ = globalThis.jquery = $;
 (async function (w) {
   "use strict";
 
-  await $.ready();
+  await new Promise(resolve => {
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', resolve);
+    } else {
+      resolve();
+    }
+  });
 
   // const testdata = await liveprintercomms.getData("http://localhost:8888/data", "POST", "nothing");
   // Logger.debug(testdata);
