@@ -12,12 +12,15 @@
   "devDependencies": {
     "bottleneck": "^2.19.5",
     "codemirror": "^6.0.2",
+    "dompurify": "^3.4.13",
     "gridlib": "github:pixelpusher/gridlib",
     "jquery": "^4.0.0",
     "liveprinter-core": "github:pixelpusher/liveprinter-core",
     "liveprinter-utils": "github:pixelpusher/lp-utils",
     "lp-language": "github:pixelpusher/lp-language",
+    "marked": "^18.0.9",
     "vite": "^8.2.1",
+    "vite-plugin-markdown": "^2.2.0",
     "vitest": "^4.1.10",
     "vizlib": "github:pixelpusher/vizlib"
   },

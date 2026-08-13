@@ -591,11 +591,11 @@ a.lightnav,
 .lightnav a:link,
 .lightnav a:active,
 .lightnav a:visited {
-  color: pink;
+  color: rgb(245, 245, 108);
 }
 
 .lightnav a:hover {
-  color: lightyellow;
+  color: white;
 }
 
 a.purplink,
@@ -768,40 +768,54 @@ a.graylink,
 }
 
 /* Custom dark modal styling */
-#editorWarningModal .modal-content {
+#editorWarningModal, .modal-content, #liveprinterHelpModal .modal-content,
+#editorWarningModal, .modal-body, #liveprinterHelpModal .modal-body  {
   background-color: #181818;
   color: #f8f9fa; /* light gray/white */
   border: 1px solid #444;
+  
 }
 
-#editorWarningModal .modal-header {
+#editorWarningModal, #liveprinterHelpModal .modal-header {
   border-bottom: 1px solid #444;
 }
 
-#editorWarningModal .modal-footer {
+#editorWarningModal, #liveprinterHelpModal .modal-footer {
   border-top: 1px solid #444;
 }
 
-#editorWarningModal .btn-close {
+/* Ensure table text inside the help modal inherits the modal's light text color */
+#liveprinterHelpModal .modal-body table,
+#liveprinterHelpModal .modal-body table th,
+#liveprinterHelpModal .modal-body table td {
+    color: inherit;
+}
+
+/* Set code blocks in help modal to light yellow for readability */
+#liveprinterHelpModal .modal-body code {
+    color: rgb(245, 245, 108);
+}
+
+#editorWarningModal, #liveprinterHelpModal .btn-close {
   filter: invert(1) grayscale(100%) brightness(200%);
 }
 
 /* Custom dark modal button styling */
-#editorWarningModal .btn-secondary {
+#editorWarningModal, #liveprinterHelpModal .btn-secondary {
   background-color: #343a40;
   border-color: #495057;
 }
 
-#editorWarningModal .btn-secondary:hover {
+#editorWarningModal, #liveprinterHelpModal .btn-secondary:hover {
   background-color: #495057;
   border-color: #6c757d;
 }
 
-#editorWarningModal .btn-primary {
+#editorWarningModal, #liveprinterHelpModal .btn-primary {
   background-color: #0e8c02; /* A dark, muted red for the confirmation action */
   border-color: #186108;
 }
-#editorWarningModal .btn-primary:hover {
+#editorWarningModal, #liveprinterHelpModal .btn-primary:hover {
   background-color: #45d645;
   border-color: #29671e;
 }
